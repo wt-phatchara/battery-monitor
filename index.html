@@ -1,324 +1,257 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CEST VISTEC - Live Battery Monitor</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEST VISTEC - Live Battery Monitor</title>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 
-    <style>
-        /* --- Base & Reset --- */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
-        body {
-            font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-            background-color: #ffffff; /* Explicitly White */
-            color: #343a40;
-            padding: 5px;
-            min-height: 100vh;
-            line-height: 1.5;
-            font-size: 14px; /* Base font size */
-        }
-        .container {
-            max-width: 1300px; /* Slightly reduced max-width */
-            margin: 0 auto;
-            padding: 0 10px;
-        }
+    <style>
+        /* --- Base & Reset --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background-color: #ffffff; /* Explicitly White */
+            color: #343a40;
+            padding: 5px;
+            min-height: 100vh;
+            line-height: 1.5;
+            font-size: 14px; /* Base font size */
+        }
+        .container {
+            max-width: 1300px; /* Slightly reduced max-width */
+            margin: 0 auto;
+            padding: 0 10px;
+        }
 
-        /* --- Header --- */
-        .header { text-align: center; margin-bottom: 25px; padding: 20px 15px; background-color: #ffffff; border-radius: 6px; border: 1px solid #e9ecef; /* Lighter border */ box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03); }
-        .header h1 { font-size: 1.8em; margin-bottom: 5px; font-weight: 700; color: #20398c; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .header .subtitle { font-size: 0.95em; color: #495057; margin-bottom: 10px; }
-        .version-badge { display: inline-block; background: #e7f1ff; /* Light blue background */ color: #0d6efd; /* Blue text */ border: 1px solid #cce0ff; padding: 4px 10px; border-radius: 10px; font-weight: 600; font-size: 0.75em; margin-bottom: 12px; }
-        .company-link { color: #20398c; text-decoration: none; font-size: 0.8em; font-weight: 600; transition: color 0.2s ease; }
-        .company-link:hover { color: #1a2f70; text-decoration: underline; }
+        /* --- Header --- */
+        .header { text-align: center; margin-bottom: 25px; padding: 20px 15px; background-color: #ffffff; border-radius: 6px; border: 1px solid #e9ecef; /* Lighter border */ box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03); }
+        .header h1 { font-size: 1.8em; margin-bottom: 5px; font-weight: 700; color: #20398c; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .header .subtitle { font-size: 0.95em; color: #495057; margin-bottom: 10px; }
+        .version-badge { display: inline-block; background: #e7f1ff; /* Light blue background */ color: #0d6efd; /* Blue text */ border: 1px solid #cce0ff; padding: 4px 10px; border-radius: 10px; font-weight: 600; font-size: 0.75em; margin-bottom: 12px; }
+        .company-link { color: #20398c; text-decoration: none; font-size: 0.8em; font-weight: 600; transition: color 0.2s ease; }
+        .company-link:hover { color: #1a2f70; text-decoration: underline; }
 
-        /* --- Status Bar --- */
-        .status-bar { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .status-badge { padding: 5px 12px; border-radius: 12px; font-size: 0.75em; font-weight: 600; display: flex; align-items: center; gap: 5px; background-color: #f8f9fa; border: 1px solid #dee2e6; color: #495057; }
-        .status-connected { background-color: #d1e7dd; color: #0f5132; border-color: #badbcc;}
-        .status-disconnected { background-color: #f8d7da; color: #842029; border-color: #f5c2c7;}
-        .live-dot { display: inline-block; width: 6px; height: 6px; background: #198754; border-radius: 50%; animation: pulse 1.8s infinite ease-in-out; }
-        .status-disconnected .live-dot { display: none; }
-        @keyframes pulse { 0%, 100% { transform: scale(0.9); opacity: 0.7; } 50% { transform: scale(1.1); opacity: 1; } }
+        /* --- Status Bar --- */
+        .status-bar { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .status-badge { padding: 5px 12px; border-radius: 12px; font-size: 0.75em; font-weight: 600; display: flex; align-items: center; gap: 5px; background-color: #f8f9fa; border: 1px solid #dee2e6; color: #495057; }
+        .status-connected { background-color: #d1e7dd; color: #0f5132; border-color: #badbcc;}
+        .status-disconnected { background-color: #f8d7da; color: #842029; border-color: #f5c2c7;}
+        .live-dot { display: inline-block; width: 6px; height: 6px; background: #198754; border-radius: 50%; animation: pulse 1.8s infinite ease-in-out; }
+        .status-disconnected .live-dot { display: none; }
+        @keyframes pulse { 0%, 100% { transform: scale(0.9); opacity: 0.7; } 50% { transform: scale(1.1); opacity: 1; } }
 
-        /* --- Toolbar --- */
-        .toolbar { background: #ffffff; border-radius: 6px; padding: 10px 15px; margin-bottom: 20px; display: flex; gap: 15px; flex-wrap: wrap; align-items: center; justify-content: space-between; border: 1px solid #e9ecef; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
-        .toolbar-section { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-        .toolbar label { color: #495057 !important; font-weight: 600; font-size: 0.8em; margin-bottom: 0; }
-        .toolbar select, .custom-range input { padding: 5px 8px; border-radius: 4px; border: 1px solid #ced4da; background-color: #ffffff; color: #343a40; font-size: 0.8em; transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out; }
-        .toolbar select { cursor: pointer; }
-        .toolbar select:focus, .custom-range input:focus { outline: 0; border-color: #86b7fe; box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25); }
-        .custom-range { display: none; gap: 8px; flex-wrap: wrap; align-items: center; }
-        .custom-range.active { display: flex; }
-        .btn { padding: 5px 12px; border: none; border-radius: 4px; font-size: 0.8em; font-weight: 600; cursor: pointer; transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease; user-select: none; }
-        .btn:active { transform: scale(0.98); }
-        .btn-secondary { background-color: #f8f9fa; color: #495057; border: 1px solid #dee2e6; }
-        .btn-secondary:hover { background-color: #e2e6ea; border-color: #ced4da; }
+        /* --- Toolbar --- */
+        .toolbar { background: #ffffff; border-radius: 6px; padding: 10px 15px; margin-bottom: 20px; display: flex; gap: 15px; flex-wrap: wrap; align-items: center; justify-content: space-between; border: 1px solid #e9ecef; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+        .toolbar-section { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .toolbar label { color: #495057 !important; font-weight: 600; font-size: 0.8em; margin-bottom: 0; }
+        .toolbar select, .custom-range input { padding: 5px 8px; border-radius: 4px; border: 1px solid #ced4da; background-color: #ffffff; color: #343a40; font-size: 0.8em; transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out; }
+        .toolbar select { cursor: pointer; }
+        .toolbar select:focus, .custom-range input:focus { outline: 0; border-color: #86b7fe; box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25); }
+        .custom-range { display: none; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .custom-range.active { display: flex; }
+        .btn { padding: 5px 12px; border: none; border-radius: 4px; font-size: 0.8em; font-weight: 600; cursor: pointer; transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease; user-select: none; }
+        .btn:active { transform: scale(0.98); }
+        .btn-secondary { background-color: #f8f9fa; color: #495057; border: 1px solid #dee2e6; }
+        .btn-secondary:hover { background-color: #e2e6ea; border-color: #ced4da; }
 
-        /* --- Metrics Grid --- */
-        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Further reduced min-width */ gap: 10px; margin-bottom: 20px; }
-        @media (min-width: 1200px) { /* Aim for 5 columns on wide screens */
-             .metrics-grid { grid-template-columns: repeat(5, 1fr); }
-        }
-        @media (min-width: 992px) and (max-width: 1199px) { /* 4 columns on medium-large */
-             .metrics-grid { grid-template-columns: repeat(4, 1fr); }
-        }
-         @media (min-width: 768px) and (max-width: 991px) { /* 3 columns on tablets */
-              .metrics-grid { grid-template-columns: repeat(3, 1fr); }
-         }
-        .metric-card { background: #ffffff; border-radius: 6px; padding: 12px 10px; text-align: center; border: 1px solid #e9ecef; /* Lighter border */ transition: all 0.2s ease; position: relative; overflow: hidden; box-shadow: none; /* Removed shadow for minimalism */ }
-        .metric-card::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(32, 57, 140, 0.04), transparent); transition: left 0.5s ease; }
-        .metric-card.flash::before { left: 100%; }
-        .metric-card:hover { transform: translateY(-2px); box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05); border-color: #ced4da;}
-        .metric-label { font-size: 0.65em; color: #6c757d; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.6px; font-weight: 600; }
-        .metric-value { font-size: 1.5em; font-weight: 700; color: #212529; display: block; min-height: 30px; line-height: 30px; }
-        .metric-unit { font-size: 0.75em; color: #495057; font-weight: 400; margin-left: 3px; }
-        .metric-label > span { margin-right: 4px; font-size: 0.9em; opacity: 0.8; }
-        .status-charging { color: #198754; font-weight: 600; } .status-discharging { color: #ffc107; font-weight: 600; } .status-idle { color: #6c757d; font-weight: 600; }
+        /* --- Metrics Grid --- */
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Further reduced min-width */ gap: 10px; margin-bottom: 20px; }
+        @media (min-width: 1200px) { /* Aim for 5 columns on wide screens */
+             .metrics-grid { grid-template-columns: repeat(5, 1fr); }
+        }
+        @media (min-width: 992px) and (max-width: 1199px) { /* 4 columns on medium-large */
+             .metrics-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+         @media (min-width: 768px) and (max-width: 991px) { /* 3 columns on tablets */
+              .metrics-grid { grid-template-columns: repeat(3, 1fr); }
+         }
+        .metric-card { background: #ffffff; border-radius: 6px; padding: 12px 10px; text-align: center; border: 1px solid #e9ecef; /* Lighter border */ transition: all 0.2s ease; position: relative; overflow: hidden; box-shadow: none; /* Removed shadow for minimalism */ }
+        .metric-card::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(32, 57, 140, 0.04), transparent); transition: left 0.5s ease; }
+        .metric-card.flash::before { left: 100%; }
+        .metric-card:hover { transform: translateY(-2px); box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05); border-color: #ced4da;}
+        .metric-label { font-size: 0.65em; color: #6c757d; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.6px; font-weight: 600; }
+        .metric-value { font-size: 1.5em; font-weight: 700; color: #212529; display: block; min-height: 30px; line-height: 30px; }
+        .metric-unit { font-size: 0.75em; color: #495057; font-weight: 400; margin-left: 3px; }
+        .metric-label > span { margin-right: 4px; font-size: 0.9em; opacity: 0.8; }
+        .status-charging { color: #198754; font-weight: 600; } .status-discharging { color: #ffc107; font-weight: 600; } .status-idle { color: #6c757d; font-weight: 600; }
 
-        /* --- Charts Container --- */
-        .charts-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); /* Smaller min-width */ gap: 15px; margin-bottom: 20px; }
-        @media (min-width: 992px) { .charts-container { grid-template-columns: repeat(2, 1fr); } }
-        .chart-card { background: #ffffff; border-radius: 8px; padding: 15px 20px; border: 1px solid #e9ecef; box-shadow: none; /* Removed shadow */ }
-        .chart-card h3 { margin-bottom: 15px; color: #20398c; font-size: 0.95em; font-weight: 600; display: flex; align-items: center; gap: 6px; }
-        .chart-wrapper { position: relative; height: 260px; /* Reduced height */ }
+        /* --- Charts Container --- */
+        .charts-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); /* Smaller min-width */ gap: 15px; margin-bottom: 20px; }
+        @media (min-width: 992px) { .charts-container { grid-template-columns: repeat(2, 1fr); } }
+        .chart-card { background: #ffffff; border-radius: 8px; padding: 15px 20px; border: 1px solid #e9ecef; box-shadow: none; /* Removed shadow */ }
+        .chart-card h3 { margin-bottom: 15px; color: #20398c; font-size: 0.95em; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+        .chart-wrapper { position: relative; height: 260px; /* Reduced height */ }
 
-        /* --- Messages --- */
-        .message-container { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 1000; max-width: 400px; width: 90%; }
-        .error-message, .success-message { padding: 10px 15px; border-radius: 5px; margin-bottom: 8px; font-weight: 600; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); animation: slideIn 0.3s ease-out; text-align: left; color: white; display: flex; align-items: center; gap: 8px; font-size: 0.85em;}
-        .error-message::before { content: '❌'; } .success-message::before { content: '✅'; }
-        .error-message { background-color: #dc3545; border: 1px solid #b02a37; } .success-message { background-color: #198754; border: 1px solid #146c43; }
-        @keyframes slideIn { from { transform: translateX(-50%) translateY(-50px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
+        /* --- Messages --- */
+        .message-container { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 1000; max-width: 400px; width: 90%; }
+        .error-message, .success-message { padding: 10px 15px; border-radius: 5px; margin-bottom: 8px; font-weight: 600; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); animation: slideIn 0.3s ease-out; text-align: left; color: white; display: flex; align-items: center; gap: 8px; font-size: 0.85em;}
+        .error-message::before { content: '❌'; } .success-message::before { content: '✅'; }
+        .error-message { background-color: #dc3545; border: 1px solid #b02a37; } .success-message { background-color: #198754; border: 1px solid #146c43; }
+        @keyframes slideIn { from { transform: translateX(-50%) translateY(-50px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
 
-        /* --- Debug Panel --- */
-        .debug-panel { display: none !important; } /* Hide debug panel completely */
+        /* --- Debug Panel --- */
+        .debug-panel { display: none !important; } /* Hide debug panel completely */
 
-        /* === MOBILE ADJUSTMENTS (Integrated and Refined) === */
-        @media (max-width: 768px) {
-            body { padding: 5px; font-size: 13px; } /* Slightly smaller base font on mobile */
-            .container { padding: 0 5px; }
-            .header { padding: 12px 8px; margin-bottom: 15px; }
-            .header h1 { font-size: 1.4em; margin-bottom: 4px; gap: 6px;}
-            .header .subtitle { font-size: 0.85em; margin-bottom: 8px;}
-            .version-badge { padding: 3px 8px; font-size: 0.7em; margin-bottom: 8px;}
-            .company-link { font-size: 0.75em; }
-            .status-bar { margin-bottom: 15px; gap: 6px; }
-            .status-badge { padding: 4px 10px; font-size: 0.7em; border-radius: 12px;}
-            .toolbar { padding: 8px; margin-bottom: 15px; flex-direction: column; align-items: stretch; gap: 10px; }
-            .toolbar-section { justify-content: space-between; gap: 6px;}
-            .toolbar-section:last-child { justify-content: center; }
-            .toolbar label, .toolbar select, .toolbar input, .btn { font-size: 0.8em; } /* Increased slightly for touch */
-            .toolbar select, .toolbar input { padding: 5px 8px;}
-            .btn { padding: 6px 12px; }
-            .metrics-grid { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-bottom: 15px; } /* Tighter grid */
-            .metric-card { padding: 10px 8px; }
-            .metric-label { font-size: 0.6em; margin-bottom: 2px; letter-spacing: 0.4px;}
-            .metric-value { font-size: 1.25em; min-height: 26px; line-height: 26px; }
-            .metric-unit { font-size: 0.7em; margin-left: 2px;}
-            .charts-container { gap: 10px; margin-bottom: 15px; }
-            .chart-card { padding: 12px; }
-            .chart-card h3 { font-size: 0.9em; margin-bottom: 8px; gap: 6px; }
-            .chart-wrapper { height: 200px; }
-             .message-container { width: 95%; top: 5px;}
-             .error-message, .success-message { font-size: 0.8em; padding: 8px 12px;}
-        }
+        /* === MOBILE ADJUSTMENTS (Integrated and Refined) === */
+        @media (max-width: 768px) {
+            body { padding: 5px; font-size: 13px; } /* Slightly smaller base font on mobile */
+            .container { padding: 0 5px; }
+            .header { padding: 12px 8px; margin-bottom: 15px; }
+            .header h1 { font-size: 1.4em; margin-bottom: 4px; gap: 6px;}
+            .header .subtitle { font-size: 0.85em; margin-bottom: 8px;}
+            .version-badge { padding: 3px 8px; font-size: 0.7em; margin-bottom: 8px;}
+            .company-link { font-size: 0.75em; }
+            .status-bar { margin-bottom: 15px; gap: 6px; }
+            .status-badge { padding: 4px 10px; font-size: 0.7em; border-radius: 12px;}
+            .toolbar { padding: 8px; margin-bottom: 15px; flex-direction: column; align-items: stretch; gap: 10px; }
+            .toolbar-section { justify-content: space-between; gap: 6px;}
+            .toolbar-section:last-child { justify-content: center; }
+            .toolbar label, .toolbar select, .toolbar input, .btn { font-size: 0.8em; } /* Increased slightly for touch */
+            .toolbar select, .toolbar input { padding: 5px 8px;}
+            .btn { padding: 6px 12px; }
+            .metrics-grid { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-bottom: 15px; } /* Tighter grid */
+            .metric-card { padding: 10px 8px; }
+            .metric-label { font-size: 0.6em; margin-bottom: 2px; letter-spacing: 0.4px;}
+            .metric-value { font-size: 1.25em; min-height: 26px; line-height: 26px; }
+            .metric-unit { font-size: 0.7em; margin-left: 2px;}
+            .charts-container { gap: 10px; margin-bottom: 15px; }
+            .chart-card { padding: 12px; }
+            .chart-card h3 { font-size: 0.9em; margin-bottom: 8px; gap: 6px; }
+            .chart-wrapper { height: 200px; }
+             .message-container { width: 95%; top: 5px;}
+             .error-message, .success-message { font-size: 0.8em; padding: 8px 12px;}
+        }
 
-        @media (max-width: 480px) {
-             .header h1 { font-size: 1.25em; }
-             .header .subtitle { font-size: 0.75em; }
-             .metrics-grid { grid-template-columns: repeat(2, 1fr); gap: 6px;} /* Force 2 columns */
-             .metric-value { font-size: 1.15em;}
-             .chart-wrapper { height: 180px; }
-             .status-badge { padding: 3px 8px; font-size: 0.65em;}
-             .toolbar-section { flex-direction: column; align-items: stretch; gap: 5px; }
-             .custom-range { flex-direction: column; align-items: stretch; gap: 4px; }
-             .custom-range label { margin-bottom: 1px; }
-             .custom-range input { width: 100%; }
-             .custom-range button { margin-top: 4px; }
-        }
-         /* === MOBILE ADJUSTMENTS END === */
+        @media (max-width: 480px) {
+             .header h1 { font-size: 1.25em; }
+             .header .subtitle { font-size: 0.75em; }
+             .metrics-grid { grid-template-columns: repeat(2, 1fr); gap: 6px;} /* Force 2 columns */
+             .metric-value { font-size: 1.15em;}
+             .chart-wrapper { height: 180px; }
+             .status-badge { padding: 3px 8px; font-size: 0.65em;}
+             .toolbar-section { flex-direction: column; align-items: stretch; gap: 5px; }
+             .custom-range { flex-direction: column; align-items: stretch; gap: 4px; }
+             .custom-range label { margin-bottom: 1px; }
+             .custom-range input { width: 100%; }
+             .custom-range button { margin-top: 4px; }
+        }
+         /* === MOBILE ADJUSTMENTS END === */
 
-    </style>
+    </style>
 </head>
 <body>
-    <div class="message-container"> <div id="errorContainer"></div> <div id="successContainer"></div> </div>
+    <div class="message-container"> <div id="errorContainer"></div> <div id="successContainer"></div> </div>
 
-    <div class="container">
-        <div class="header">
-            <h1><span style="font-size: 1em;">☀️</span> Solar Light Field Test Monitoring</h1>
-            <p class="subtitle">Real-time CEST Battery Monitoring</p>
-            <div class="version-badge"> LIVE DATA </div><br>
-            <a href="https://www.cestvistec.com/" class="company-link" target="_blank" rel="noopener noreferrer"> 🌐 CEST VISTEC - Battery Technology Solutions </a>
-        </div>
+    <div class="container">
+        <div class="header">
+            <h1><span style="font-size: 1em;">☀️</span> Solar Light Field Test Monitoring</h1>
+            <p class="subtitle">Real-time CEST Battery Monitoring</p>
+            <div class="version-badge"> LIVE DATA </div><br>
+            <a href="https://www.cestvistec.com/" class="company-link" target="_blank" rel="noopener noreferrer"> 🌐 CEST VISTEC - Battery Technology Solutions </a>
+        </div>
 
-        <div class="status-bar"> <div id="statusBadge" class="status-badge status-disconnected"> <span id="liveDot" class="live-dot"></span> <span id="statusText">Connecting...</span> </div> <div class="status-badge status-info"> <span>Last Update:</span>&nbsp;<span id="lastUpdate">Waiting...</span> </div> <div class="status-badge status-info"> <span>Points:</span>&nbsp;<span id="dataPoints">0</span> </div> </div>
-         <div id="toolbar" class="toolbar"> <div class="toolbar-section"> <label for="timeRangeSelect">Time Range:</label> <select id="timeRangeSelect" onchange="handleTimeRangeChange()"> <option value="5m">Last 5 Min</option> <option value="15m">Last 15 Min</option> <option value="30m">Last 30 Min</option> <option value="1h">Last 1 Hour</option> <option value="3h">Last 3 Hours</option> <option value="6h">Last 6 Hours</option> <option value="12h">Last 12 Hours</option> <option value="24h">Last 24 Hours</option> <option value="7d">Last 7 Days</option> <option value="custom">Custom</option> </select> <div id="customRange" class="custom-range"> <label for="startTime">From:</label> <input type="datetime-local" id="startTime"> <label for="endTime">To:</label> <input type="datetime-local" id="endTime"> <button class="btn btn-secondary" onclick="applyCustomRange()">Apply</button> </div> </div> <div class="toolbar-section"> <button class="btn btn-secondary" onclick="refreshData()">🔄 Refresh</button> </div> </div>
-         <div id="metricsGrid" class="metrics-grid"> <div class="metric-card" id="card-voltage-filtered"> <div class="metric-label"><span>🔋</span> Voltage (Filtered)</div> <div class="metric-value"> <span id="voltageFiltered">--</span><span class="metric-unit">V</span> </div> </div> <div class="metric-card" id="card-voltage-raw"> <div class="metric-label"><span>📊</span> Voltage (Raw)</div> <div class="metric-value"> <span id="voltageRaw">--</span><span class="metric-unit">V</span> </div> </div> <div class="metric-card" id="card-current"> <div class="metric-label"><span>⚡</span> Current</div> <div class="metric-value"> <span id="current">--</span><span class="metric-unit">mA</span> </div> </div> <div class="metric-card" id="card-power"> <div class="metric-label"><span>💪</span> Power</div> <div class="metric-value"> <span id="power">--</span><span class="metric-unit">W</span> </div> </div> <div class="metric-card" id="card-soc"> <div class="metric-label"><span>🔋</span> State of Charge</div> <div class="metric-value"> <span id="soc">--</span><span class="metric-unit">%</span> </div> </div> <div class="metric-card" id="card-temp"> <div class="metric-label"><span>🌡️</span> Temperature</div> <div class="metric-value"> <span id="temp">--</span><span class="metric-unit">°C</span> </div> </div> <div class="metric-card" id="card-humidity"> <div class="metric-label"><span>💧</span> Humidity</div> <div class="metric-value"> <span id="humidity">--</span><span class="metric-unit">%</span> </div> </div> <div class="metric-card" id="card-status"> <div class="metric-label"><span>📈</span> Status</div> <div class="metric-value"> <span id="status">IDLE</span> </div> </div> <div class="metric-card" id="card-good"> <div class="metric-label"><span>✅</span> Good Readings</div> <div class="metric-value"> <span id="goodReadings">--</span> </div> </div> <div class="metric-card" id="card-bad"> <div class="metric-label"><span>❌</span> Bad Readings</div> <div class="metric-value"> <span id="badReadings">--</span> </div> </div> </div>
-         <div id="chartsContainer" class="charts-container"> <div class="chart-card"> <h3>📊 Voltage Monitoring</h3> <div class="chart-wrapper"> <canvas id="voltageChart"></canvas> </div> </div> <div class="chart-card"> <h3>⚡ Current & Power</h3> <div class="chart-wrapper"> <canvas id="powerChart"></canvas> </div> </div> <div class="chart-card"> <h3>🔋 State of Charge</h3> <div class="chart-wrapper"> <canvas id="socChart"></canvas> </div> </div> <div class="chart-card"> <h3>🌡️ Environmental Conditions</h3> <div class="chart-wrapper"> <canvas id="envChart"></canvas> </div> </div> </div>
+        <div class="status-bar"> <div id="statusBadge" class="status-badge status-disconnected"> <span id="liveDot" class="live-dot"></span> <span id="statusText">Connecting...</span> </div> <div class="status-badge status-info"> <span>Last Update:</span>&nbsp;<span id="lastUpdate">Waiting...</span> </div> <div class="status-badge status-info"> <span>Points:</span>&nbsp;<span id="dataPoints">0</span> </div> </div>
+         <div id="toolbar" class="toolbar"> <div class="toolbar-section"> <label for="timeRangeSelect">Time Range:</label> <select id="timeRangeSelect" onchange="handleTimeRangeChange()"> <option value="5m">Last 5 Min</option> <option value="15m">Last 15 Min</option> <option value="30m">Last 30 Min</option> <option value="1h">Last 1 Hour</option> <option value="3h">Last 3 Hours</option> <option value="6h">Last 6 Hours</option> <option value="12h">Last 12 Hours</option> <option value="24h">Last 24 Hours</option> <option value="7d">Last 7 Days</option> <option value="custom">Custom</option> </select> <div id="customRange" class="custom-range"> <label for="startTime">From:</label> <input type="datetime-local" id="startTime"> <label for="endTime">To:</label> <input type="datetime-local" id="endTime"> <button class="btn btn-secondary" onclick="applyCustomRange()">Apply</button> </div> </div> <div class="toolbar-section"> <button class="btn btn-secondary" onclick="refreshData()">🔄 Refresh</button> </div> </div>
+         <div id="metricsGrid" class="metrics-grid"> <div class="metric-card" id="card-voltage-filtered"> <div class="metric-label"><span>🔋</span> Voltage (Filtered)</div> <div class="metric-value"> <span id="voltageFiltered">--</span><span class="metric-unit">V</span> </div> </div> <div class="metric-card" id="card-voltage-raw"> <div class="metric-label"><span>📊</span> Voltage (Raw)</div> <div class="metric-value"> <span id="voltageRaw">--</span><span class="metric-unit">V</span> </div> </div> <div class="metric-card" id="card-current"> <div class="metric-label"><span>⚡</span> Current</div> <div class="metric-value"> <span id="current">--</span><span class="metric-unit">mA</span> </div> </div> <div class="metric-card" id="card-power"> <div class="metric-label"><span>💪</span> Power</div> <div class="metric-value"> <span id="power">--</span><span class="metric-unit">W</span> </div> </div> <div class="metric-card" id="card-soc"> <div class="metric-label"><span>🔋</span> State of Charge</div> <div class="metric-value"> <span id="soc">--</span><span class="metric-unit">%</span> </div> </div> <div class="metric-card" id="card-temp"> <div class="metric-label"><span>🌡️</span> Temperature</div> <div class="metric-value"> <span id="temp">--</span><span class="metric-unit">°C</span> </div> </div> <div class="metric-card" id="card-humidity"> <div class="metric-label"><span>💧</span> Humidity</div> <div class="metric-value"> <span id="humidity">--</span><span class="metric-unit">%</span> </div> </div> <div class="metric-card" id="card-status"> <div class="metric-label"><span>📈</span> Status</div> <div class="metric-value"> <span id="status">IDLE</span> </div> </div> <div class="metric-card" id="card-good"> <div class="metric-label"><span>✅</span> Good Readings</div> <div class="metric-value"> <span id="goodReadings">--</span> </div> </div> <div class="metric-card" id="card-bad"> <div class="metric-label"><span>❌</span> Bad Readings</div> <div class="metric-value"> <span id="badReadings">--</span> </div> </div> </div>
+         <div id="chartsContainer" class="charts-container"> <div class="chart-card"> <h3>📊 Voltage Monitoring</h3> <div class="chart-wrapper"> <canvas id="voltageChart"></canvas> </div> </div> <div class="chart-card"> <h3>⚡ Current & Power</h3> <div class="chart-wrapper"> <canvas id="powerChart"></canvas> </div> </div> <div class="chart-card"> <h3>🔋 State of Charge</h3> <div class="chart-wrapper"> <canvas id="socChart"></canvas> </div> </div> <div class="chart-card"> <h3>🌡️ Environmental Conditions</h3> <div class="chart-wrapper"> <canvas id="envChart"></canvas> </div> </div> </div>
 
-        <div id="debugInfo" class="debug-panel"></div>
-    </div>
+        <div id="debugInfo" class="debug-panel"></div>
+    </div>
 
-    <script>
-        // --- GLOBAL VARIABLES ---
-        const config = { url: "https://us-east-1-1.aws.cloud2.influxdata.com", token: "fRjbZpkh28B7HIaqHyR4A62Jr2bGwiC8Hcc-LwaCUxtKojBMH39CscUEuqp9PTDuqab_3yEfFGtCtsdCYD52Fw==", org: "060e7983bb6be38e", bucket: "solar_bucket" };
-        let updateInterval = null, charts = {}, currentTimeRange = '5m', rawDataCache = [], isUpdating = false /* updateCounter removed */;
-        let aggregateInterval = '5s';
-        const ui = {};
+    <script>
+        // --- GLOBAL VARIABLES ---
+        const config = { url: "https://us-east-1-1.aws.cloud2.influxdata.com", token: "fRjbZpkh28B7HIaqHyR4A62Jr2bGwiC8Hcc-LwaCUxtKojBMH39CscUEuqp9PTDuqab_3yEfFGtCtsdCYD52Fw==", org: "060e7983bb6be38e", bucket: "solar_bucket" };
+        let updateInterval = null, charts = {}, currentTimeRange = '5m', rawDataCache = [], isUpdating = false /* updateCounter removed */;
+        let aggregateInterval = '5s';
+        const ui = {};
 
-        // --- INITIALIZATION ---
-        window.addEventListener('load', () => {
-            console.log('🚀 CEST VISTEC Battery Monitor - Minimal v1.4');
-            cacheDOMElements();
-            startMonitoring();
-        });
+        // --- INITIALIZATION ---
+        window.addEventListener('load', () => {
+            console.log('🚀 CEST VISTEC Battery Monitor - Minimal v1.4');
+            cacheDOMElements();
+            startMonitoring();
+        });
 
-        // --- Cache UI Elements ---
-        function cacheDOMElements() {
-            ui.statusBadge = document.getElementById('statusBadge'); ui.statusText = document.getElementById('statusText'); ui.liveDot = document.getElementById('liveDot'); ui.lastUpdate = document.getElementById('lastUpdate'); ui.dataPoints = document.getElementById('dataPoints'); ui.errorContainer = document.getElementById('errorContainer'); ui.successContainer = document.getElementById('successContainer'); ui.timeRangeSelect = document.getElementById('timeRangeSelect'); ui.customRangeDiv = document.getElementById('customRange'); ui.startTimeInput = document.getElementById('startTime'); ui.endTimeInput = document.getElementById('endTime'); /* ui.updateCountSpan removed */
-            ui.voltageFiltered = document.getElementById('voltageFiltered'); ui.voltageRaw = document.getElementById('voltageRaw'); ui.current = document.getElementById('current'); ui.power = document.getElementById('power'); ui.soc = document.getElementById('soc'); ui.temp = document.getElementById('temp'); ui.humidity = document.getElementById('humidity'); ui.status = document.getElementById('status'); ui.goodReadings = document.getElementById('goodReadings'); ui.badReadings = document.getElementById('badReadings');
-            ui.voltageChartCanvas = document.getElementById('voltageChart'); ui.powerChartCanvas = document.getElementById('powerChart'); ui.socChartCanvas = document.getElementById('socChart'); ui.envChartCanvas = document.getElementById('envChart');
-        }
+        // --- Cache UI Elements ---
+        function cacheDOMElements() {
+            ui.statusBadge = document.getElementById('statusBadge'); ui.statusText = document.getElementById('statusText'); ui.liveDot = document.getElementById('liveDot'); ui.lastUpdate = document.getElementById('lastUpdate'); ui.dataPoints = document.getElementById('dataPoints'); ui.errorContainer = document.getElementById('errorContainer'); ui.successContainer = document.getElementById('successContainer'); ui.timeRangeSelect = document.getElementById('timeRangeSelect'); ui.customRangeDiv = document.getElementById('customRange'); ui.startTimeInput = document.getElementById('startTime'); ui.endTimeInput = document.getElementById('endTime'); /* ui.updateCountSpan removed */
+            ui.voltageFiltered = document.getElementById('voltageFiltered'); ui.voltageRaw = document.getElementById('voltageRaw'); ui.current = document.getElementById('current'); ui.power = document.getElementById('power'); ui.soc = document.getElementById('soc'); ui.temp = document.getElementById('temp'); ui.humidity = document.getElementById('humidity'); ui.status = document.getElementById('status'); ui.goodReadings = document.getElementById('goodReadings'); ui.badReadings = document.getElementById('badReadings');
+            ui.voltageChartCanvas = document.getElementById('voltageChart'); ui.powerChartCanvas = document.getElementById('powerChart'); ui.socChartCanvas = document.getElementById('socChart'); ui.envChartCanvas = document.getElementById('envChart');
+        }
 
-        // --- START MONITORING ---
-        function startMonitoring() { initCharts(); fetchData(); if (updateInterval) clearInterval(updateInterval); updateInterval = setInterval(() => { if (!isUpdating) fetchData(); }, 3000); console.log('✅ Monitoring started - refreshing every 3 seconds'); }
+        // --- START MONITORING ---
+        function startMonitoring() { initCharts(); fetchData(); if (updateInterval) clearInterval(updateInterval); updateInterval = setInterval(() => { if (!isUpdating) fetchData(); }, 3000); console.log('✅ Monitoring started - refreshing every 3 seconds'); }
 
-        // --- TIME RANGE FUNCTIONS --- (Unchanged)
-        function handleTimeRangeChange() { currentTimeRange = ui.timeRangeSelect.value; if (currentTimeRange === 'custom') { ui.customRangeDiv.classList.add('active'); const now = new Date(), oneHourAgo = new Date(now - 3600000); ui.endTimeInput.value = formatDateTimeLocal(now); ui.startTimeInput.value = formatDateTimeLocal(oneHourAgo); } else { ui.customRangeDiv.classList.remove('active'); fetchData(); } } function applyCustomRange() { fetchData(); } function formatDateTimeLocal(date) { const pad = (n) => String(n).padStart(2, '0'); return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`; } function getTimeRangeQuery() { if (currentTimeRange === 'custom') { const start = ui.startTimeInput.value, end = ui.endTimeInput.value; if (!start || !end) { showError('Select start and end times'); return null; } return `range(start: ${new Date(start).toISOString()}, stop: ${new Date(end).toISOString()})`; } else { return `range(start: -${currentTimeRange})`; } } function refreshData() { clearError(); clearSuccess(); fetchData(); showSuccess('Data refreshed'); }
+        // --- TIME RANGE FUNCTIONS --- (Unchanged)
+        function handleTimeRangeChange() { currentTimeRange = ui.timeRangeSelect.value; if (currentTimeRange === 'custom') { ui.customRangeDiv.classList.add('active'); const now = new Date(), oneHourAgo = new Date(now - 3600000); ui.endTimeInput.value = formatDateTimeLocal(now); ui.startTimeInput.value = formatDateTimeLocal(oneHourAgo); } else { ui.customRangeDiv.classList.remove('active'); fetchData(); } } function applyCustomRange() { fetchData(); } function formatDateTimeLocal(date) { const pad = (n) => String(n).padStart(2, '0'); return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`; } function getTimeRangeQuery() { if (currentTimeRange === 'custom') { const start = ui.startTimeInput.value, end = ui.endTimeInput.value; if (!start || !end) { showError('Select start and end times'); return null; } return `range(start: ${new Date(start).toISOString()}, stop: ${new Date(end).toISOString()})`; } else { return `range(start: -${currentTimeRange})`; } } function refreshData() { clearError(); clearSuccess(); fetchData(); showSuccess('Data refreshed'); }
 
-        // --- CHART INITIALIZATION (Minimalist) ---
-        function initCharts() {
-             // Shared options with grid lines REMOVED
-            const chartOptions = {
-                responsive: true, maintainAspectRatio: false, animation: false,
-                interaction: { mode: 'index', intersect: false },
-                scales: {
-                    x: {
-                        type: 'time', time: { unit: 'minute', displayFormats: { minute: 'HH:mm', hour: 'MMM dd HH:mm', day: 'MMM dd' } },
-                        ticks: { color: '#6c757d', maxTicksLimit: 8, font: {size: 9} }, // Fewer ticks, smaller font
-                        grid: { display: false }, // Remove X grid lines
-                        border: { color: '#dee2e6'} // Light border for axis line
-                    },
-                    y: {
-                        ticks: { color: '#6c757d', font: {size: 9}, maxTicksLimit: 6 }, // Fewer ticks, smaller font
-                        grid: { display: false }, // Remove Y grid lines
-                        border: { display: false }, // Remove Y axis line itself
-                        grace: '5%' // Add a little space above/below data
-                    },
-                    // Specific axis for multi-axis charts
-                    y1: {
-                         position: 'right',
-      _                  ticks: { color: '#6c757d', font: {size: 9}, maxTicksLimit: 6 },
-                         grid: { display: false }, // No grid
-                         border: { display: false }, // No axis line
-                         grace: '5%'
-                    }
-                },
-                plugins: {
-                    legend: { labels: { color: '#343a40', font: { size: 10, weight: 600 }, boxWidth: 12, padding: 10 } }, // Smaller legend
-                    tooltip: { backgroundColor: 'rgba(0, 0, 0, 0.75)', titleColor: '#fff', bodyColor: '#fff', borderColor: 'rgba(0, 0, 0, 0.1)', borderWidth: 1, padding: 6, boxPadding: 3, titleFont: { size: 11 }, bodyFont: { size: 10 } } // Compact tooltip
-                }
-            };
-            const colorFilteredVoltage = '#198754', colorRawVoltage = '#0d6efd', colorCurrent = '#ffc107', colorPower = '#dc3545', colorSoC = '#6f42c1', colorTemp = '#fd7e14', colorHumidity = '#0dcaf0';
-            // Thinner lines, less fill opacity
-            const defaultLineOptions = { fill: true, tension: 0.3, borderWidth: 1.5, pointRadius: 0, pointHoverRadius: 3, pointHitRadius: 5 };
+        // --- CHART INITIALIZATION (Minimalist) ---
+        function initCharts() {
+             // Shared options with grid lines REMOVED
+            const chartOptions = {
+                responsive: true, maintainAspectRatio: false, animation: false,
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                    x: {
+                        type: 'time', time: { unit: 'minute', displayFormats: { minute: 'HH:mm', hour: 'MMM dd HH:mm', day: 'MMM dd' } },
+                        ticks: { color: '#6c757d', maxTicksLimit: 8, font: {size: 9} }, // Fewer ticks, smaller font
+                        grid: { display: false }, // Remove X grid lines
+                        border: { color: '#dee2e6'} // Light border for axis line
+                    },
+                    y: {
+                        ticks: { color: '#6c757d', font: {size: 9}, maxTicksLimit: 6 }, // Fewer ticks, smaller font
+                        grid: { display: false }, // Remove Y grid lines
+                        border: { display: false }, // Remove Y axis line itself
+                        grace: '5%' // Add a little space above/below data
+                    },
+                    // Specific axis for multi-axis charts
+                    y1: {
+                         position: 'right',
+                         ticks: { color: '#6c757d', font: {size: 9}, maxTicksLimit: 6 },
+                         grid: { display: false }, // No grid
+                         border: { display: false }, // No axis line
+                         grace: '5%'
+                    }
+                },
+                plugins: {
+                    legend: { labels: { color: '#343a40', font: { size: 10, weight: 600 }, boxWidth: 12, padding: 10 } }, // Smaller legend
+                    tooltip: { backgroundColor: 'rgba(0, 0, 0, 0.75)', titleColor: '#fff', bodyColor: '#fff', borderColor: 'rgba(0, 0, 0, 0.1)', borderWidth: 1, padding: 6, boxPadding: 3, titleFont: { size: 11 }, bodyFont: { size: 10 } } // Compact tooltip
+                }
+            };
+            const colorFilteredVoltage = '#198754', colorRawVoltage = '#0d6efd', colorCurrent = '#ffc107', colorPower = '#dc3545', colorSoC = '#6f42c1', colorTemp = '#fd7e14', colorHumidity = '#0dcaf0';
+            // Thinner lines, less fill opacity
+            const defaultLineOptions = { fill: true, tension: 0.3, borderWidth: 1.5, pointRadius: 0, pointHoverRadius: 3, pointHitRadius: 5 };
 
-            Object.values(charts).forEach(chart => chart?.destroy());
+            Object.values(charts).forEach(chart => chart?.destroy());
 
-            charts.voltage = new Chart(ui.voltageChartCanvas, { type: 'line', data: { datasets: [ { label: 'Filtered (V)', data: [], borderColor: colorFilteredVoltage, backgroundColor: 'rgba(25, 135, 84, 0.05)', ...defaultLineOptions }, { label: 'Raw (V)', data: [], borderColor: colorRawVoltage, backgroundColor: 'rgba(13, 110, 253, 0.05)', tension: 0.1, borderWidth: 1.2, pointRadius: 0 } ]}, options: chartOptions });
-            charts.power = new Chart(ui.powerChartCanvas, { type: 'line', data: { datasets: [ { label: 'Current (mA)', data: [], borderColor: colorCurrent, backgroundColor: 'rgba(255, 193, 7, 0.05)', yAxisID: 'y', ...defaultLineOptions }, { label: 'Power (W)', data: [], borderColor: colorPower, backgroundColor: 'rgba(220, 53, 69, 0.05)', yAxisID: 'y1', ...defaultLineOptions } ]}, options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, position: 'left', title: { display: false } }, y1: { ...chartOptions.scales.y1, position: 'right', title: { display: false } } }} }); // Removed axis titles for minimalism
-            charts.soc = new Chart(ui.socChartCanvas, { type: 'line', data: { datasets: [{ label: 'State of Charge (%)', data: [], borderColor: colorSoC, backgroundColor: 'rgba(111, 66, 193, 0.05)', ...defaultLineOptions }]}, options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, min: 0, max: 100 } } } });
-            charts.env = new Chart(ui.envChartCanvas, { type: 'line', data: { datasets: [ { label: 'Temperature (°C)', data: [], borderColor: colorTemp, backgroundColor: 'rgba(253, 126, 20, 0.05)', yAxisID: 'y', ...defaultLineOptions }, { label: 'Humidity (%)', data: [], borderColor: colorHumidity, backgroundColor: 'rgba(13, 202, 240, 0.05)', yAxisID: 'y1', ...defaultLineOptions } ]}, options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, position: 'left', title: { display: false } }, y1: { ...chartOptions.scales.y1, position: 'right', title: { display: false } } }} }); // Removed axis titles
-            console.log('✅ Charts initialized (Minimalist)');
-        }
+            charts.voltage = new Chart(ui.voltageChartCanvas, { type: 'line', data: { datasets: [ { label: 'Filtered (V)', data: [], borderColor: colorFilteredVoltage, backgroundColor: 'rgba(25, 135, 84, 0.05)', ...defaultLineOptions }, { label: 'Raw (V)', data: [], borderColor: colorRawVoltage, backgroundColor: 'rgba(13, 110, 253, 0.05)', tension: 0.1, borderWidth: 1.2, pointRadius: 0 } ]}, options: chartOptions });
+            charts.power = new Chart(ui.powerChartCanvas, { type: 'line', data: { datasets: [ { label: 'Current (mA)', data: [], borderColor: colorCurrent, backgroundColor: 'rgba(255, 193, 7, 0.05)', yAxisID: 'y', ...defaultLineOptions }, { label: 'Power (W)', data: [], borderColor: colorPower, backgroundColor: 'rgba(220, 53, 69, 0.05)', yAxisID: 'y1', ...defaultLineOptions } ]}, options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, position: 'left', title: { display: false } }, y1: { ...chartOptions.scales.y1, position: 'right', title: { display: false } } }} }); // Removed axis titles for minimalism
+            charts.soc = new Chart(ui.socChartCanvas, { type: 'line', data: { datasets: [{ label: 'State of Charge (%)', data: [], borderColor: colorSoC, backgroundColor: 'rgba(111, 66, 193, 0.05)', ...defaultLineOptions }]}, options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, min: 0, max: 100 } } } });
+            charts.env = new Chart(ui.envChartCanvas, { type: 'line', data: { datasets: [ { label: 'Temperature (°C)', data: [], borderColor: colorTemp, backgroundColor: 'rgba(253, 126, 20, 0.05)', yAxisID: 'y', ...defaultLineOptions }, { label: 'Humidity (%)', data: [], borderColor: colorHumidity, backgroundColor: 'rgba(13, 202, 240, 0.05)', yAxisID: 'y1', ...defaultLineOptions } ]}, options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, position: 'left', title: { display: false } }, y1: { ...chartOptions.scales.y1, position: 'right', title: { display: false } } }} }); // Removed axis titles
+            console.log('✅ Charts initialized (Minimalist)');
+        }
 
-        // --- [START] EDITED DATA FETCHING (Using fn: last for Aggregation) ---
-        async function fetchData() {
-            if (isUpdating) return; isUpdating = true; console.log(`\n🔄 [${new Date().toLocaleTimeString()}] FETCHING DATA...`);
-            let fetchSuccessful = false;
-            try {
-                const timeRange = getTimeRangeQuery(); if (!timeRange) { isUpdating = false; return; }
+        // --- DATA FETCHING (with Aggregation) --- (Unchanged)
+        async function fetchData() { if (isUpdating) return; isUpdating = true; console.log(`\n🔄 [${new Date().toLocaleTimeString()}] FETCHING DATA...`); let fetchSuccessful = false; try { const timeRange = getTimeRangeQuery(); if (!timeRange) { isUpdating = false; return; } let currentInterval = '5s'; if (['15m', '30m'].includes(currentTimeRange)) { currentInterval = '15s'; } else if (['1h', '3h'].includes(currentTimeRange)) { currentInterval = '1m'; } else if (['6h', '12h', '24h'].includes(currentTimeRange)) { currentInterval = '5m'; } else if (['7d'].includes(currentTimeRange) || currentTimeRange === 'custom') { currentInterval = '15m'; } aggregateInterval = currentInterval; let requiresAggregation = !!aggregateInterval; let fluxQuery = ` from(bucket: "${config.bucket}") |> ${timeRange} |> filter(fn: (r) => r["_measurement"] == "ncr18650b_power_data") |> filter(fn: (r) => r["battery_type"] == "NCR18650B_1s3p") |> filter(fn: (r) => r["_field"] == "voltage_filtered" or r["_field"] == "voltage_raw" or r["_field"] == "current_ma" or r["_field"] == "power_w" or r["_field"] == "soc_percent" or r["_field"] == "ambient_temp_c" or r["_field"] == "ambient_humidity_percent" or r["_field"] == "bad_readings_total" or r["_field"] == "is_charging" or r["_field"] == "is_discharging") `; if (requiresAggregation) { fluxQuery += `|> aggregateWindow(every: ${aggregateInterval}, fn: mean, createEmpty: false) `; } else { fluxQuery += `|> sort(columns: ["_time"], desc: false) `; } console.log("Using aggregate interval:", aggregateInterval || "Raw"); const response = await fetch(`${config.url}/api/v2/query?org=${encodeURIComponent(config.org)}`, { method: 'POST', headers: { 'Authorization': `Token ${config.token}`, 'Content-Type': 'application/vnd.flux', 'Accept': 'application/csv' }, body: fluxQuery }); if (!response.ok) { const errorBody = await response.text(); console.error("InfluxDB Error Body:", errorBody); throw new Error(`HTTP ${response.status}: ${errorBody}`); } const csv = await response.text(); processData(csv, requiresAggregation); fetchSuccessful = true; clearError(); } catch (error) { console.error('❌ Fetch error:', error); if (error.message.includes('HTTP 413') || error.message.includes('request too large')) { showError('Data request too large. Try a shorter time range.'); } else if (error.message.includes('HTTP 401') || error.message.includes('unauthorized')) { showError('Authentication failed. Please check the API Token.'); } else { showError(`Connection error: ${error.message.substring(0, 100)}...`); } } finally { updateStatus(fetchSuccessful); isUpdating = false; } }
 
-                // --- Determine aggregation interval ---
-                let currentInterval = '5s'; // Default interval
-                if (['15m', '30m'].includes(currentTimeRange)) { currentInterval = '15s'; }
-                else if (['1h', '3h'].includes(currentTimeRange)) { currentInterval = '1m'; }
-                else if (['6h', '12h', '24h'].includes(currentTimeRange)) { currentInterval = '5m'; }
-                else if (['7d'].includes(currentTimeRange) || currentTimeRange === 'custom') { currentInterval = '15m'; }
-                // Optional: Disable aggregation for very short ranges like 5m?
-                // if (['5m'].includes(currentTimeRange)) { currentInterval = ''; } // Uncomment to see raw data for 5m
+        // --- DATA PROCESSING --- (updateCounter removed)
+        function processData(csv, isAggregated) { console.log(`📊 PROCESSING DATA... (Aggregated: ${isAggregated})`); const lines = csv.trim().split('\n'); const timeSeries = { voltage_filtered: [], voltage_raw: [], current_ma: [], power_w: [], soc_percent: [], ambient_temp_c: [], ambient_humidity_percent: [] }; const latestValues = {}; let totalPoints = 0; rawDataCache = []; for (let i = 0; i < lines.length; i++) { const line = lines[i].trim(); if (!line || line.startsWith('#') || (line.includes('_time') && line.includes('_value') && line.includes('_field'))) continue; const parts = line.split(','); if (parts.length < 8) continue; const timeStr = parts[5]?.trim(), valueStr = parts[6]?.trim(), field = parts[7]?.trim(); if (!timeStr || !valueStr || !field) continue; const time = new Date(timeStr), value = parseFloat(valueStr); if (isNaN(time.getTime()) || isNaN(value)) continue; rawDataCache.push({ timestamp: time.toISOString(), field: field, value: value }); if (timeSeries.hasOwnProperty(field)) { timeSeries[field].push({ x: time, y: value }); totalPoints++; } latestValues[field] = value; } console.log(`📦 Parsed ${totalPoints} data points`); console.log(`📝 Latest values:`, latestValues); forceUpdateValue(ui.voltageFiltered, 'card-voltage-filtered', latestValues['voltage_filtered'], 3, 'V'); forceUpdateValue(ui.voltageRaw, 'card-voltage-raw', latestValues['voltage_raw'], 3, 'V'); forceUpdateValue(ui.current, 'card-current', latestValues['current_ma'], 0, 'mA'); forceUpdateValue(ui.power, 'card-power', latestValues['power_w'], 2, 'W'); forceUpdateValue(ui.soc, 'card-soc', latestValues['soc_percent'], 1, '%'); forceUpdateValue(ui.temp, 'card-temp', latestValues['ambient_temp_c'], 1, '°C'); forceUpdateValue(ui.humidity, 'card-humidity', latestValues['ambient_humidity_percent'], 0, '%'); forceUpdateValue(ui.badReadings, 'card-bad', latestValues['bad_readings_total'], 0, ''); const badReadingsCount = latestValues['bad_readings_total'] !== undefined ? Math.round(latestValues['bad_readings_total']) : 0; const goodReadingsCount = totalPoints > 0 ? Math.max(0, totalPoints - badReadingsCount) : 0; forceUpdateValue(ui.goodReadings, 'card-good', goodReadingsCount, 0, ''); let status = 'IDLE', statusClass = 'status-idle'; if (latestValues['is_charging'] !== undefined && Math.round(latestValues['is_charging']) === 1) { status = 'CHARGING'; statusClass = 'status-charging'; } else if (latestValues['is_discharging'] !== undefined && Math.round(latestValues['is_discharging']) === 1) { status = 'DISCHARGING'; statusClass = 'status-discharging'; } if (ui.status) { ui.status.textContent = status; ui.status.className = statusClass; flashCard('card-status'); } /* updateCounter removed */ ui.dataPoints.textContent = totalPoints; if(charts.voltage) { charts.voltage.data.datasets[0].data = timeSeries.voltage_filtered; charts.voltage.data.datasets[1].data = timeSeries.voltage_raw; charts.voltage.update('none'); } if(charts.power) { charts.power.data.datasets[0].data = timeSeries.current_ma; charts.power.data.datasets[1].data = timeSeries.power_w; charts.power.update('none'); } if(charts.soc) { charts.soc.data.datasets[0].data = timeSeries.soc_percent; charts.soc.update('none'); } if(charts.env) { charts.env.data.datasets[0].data = timeSeries.ambient_temp_c; charts.env.data.datasets[1].data = timeSeries.ambient_humidity_percent; charts.env.update('none'); } console.log(`✅ UPDATE COMPLETE!`); }
 
-                aggregateInterval = currentInterval; // Update global var
-                let requiresAggregation = !!aggregateInterval;
+        // --- FORCE UPDATE VALUE & FLASH --- (Unchanged)
+        function forceUpdateValue(element, cardId, value, decimals, unit) { if (!element) { console.warn(`Element for card ${cardId} NOT FOUND!`); return; } const formattedValue = (value !== undefined && value !== null && !isNaN(value)) ? Number(value).toFixed(decimals) : '--'; element.textContent = formattedValue; const unitEl = element.nextElementSibling; if (unitEl && unitEl.classList.contains('metric-unit')) { unitEl.textContent = unit; } else { console.warn(`Unit element not found for ${element.id}`); element.textContent = formattedValue + (unit || ''); } flashCard(cardId); } function flashCard(cardId) { const card = document.getElementById(cardId); if (card) { card.classList.remove('flash'); void card.offsetWidth; card.classList.add('flash'); setTimeout(() => { card.classList.remove('flash'); }, 550); } }
 
-                // --- Build Query ---
-                let fluxQuery = `
-                    from(bucket: "${config.bucket}")
-                      |> ${timeRange}
-                      |> filter(fn: (r) => r["_measurement"] == "ncr18650b_power_data")
-                      |> filter(fn: (r) => r["battery_type"] == "NCR18650B_1s3p")
-                      |> filter(fn: (r) =>
-                            r["_field"] == "voltage_filtered" or
-                            r["_field"] == "voltage_raw" or
-                            r["_field"] == "current_ma" or
-warning                     r["_field"] == "power_w" or
-                            r["_field"] == "soc_percent" or
-                            r["_field"] == "ambient_temp_c" or
-                            r["_field"] == "ambient_humidity_percent" or
-                            r["_field"] == "bad_readings_total" or
-                            r["_field"] == "is_charging" or
-                            r["_field"] == "is_discharging"
-is-discharging               )
-                `;
+        // --- STATUS & MESSAGES --- (Unchanged)
+        function updateStatus(connected) { if (!ui.statusBadge || !ui.statusText || !ui.liveDot || !ui.lastUpdate) return; if (connected) { ui.statusBadge.className = 'status-badge status-connected'; ui.statusText.textContent = 'Connected'; ui.liveDot.style.display = 'inline-block'; ui.lastUpdate.textContent = new Date().toLocaleTimeString(); } else { ui.statusBadge.className = 'status-badge status-disconnected'; ui.statusText.textContent = 'Disconnected'; ui.liveDot.style.display = 'none'; ui.lastUpdate.textContent = 'Connection lost'; } } let errorTimeout, successTimeout; function showError(message) { clearTimeout(successTimeout); clearError(); if(ui.errorContainer) ui.errorContainer.innerHTML = `<div class="error-message">${message}</div>`; errorTimeout = setTimeout(clearError, 6000); } function clearError() { clearTimeout(errorTimeout); if(ui.errorContainer) ui.errorContainer.innerHTML = ''; } function showSuccess(message) { clearTimeout(errorTimeout); clearSuccess(); if(ui.successContainer) ui.successContainer.innerHTML = `<div class="success-message">${message}</div>`; successTimeout = setTimeout(clearSuccess, 3500); } function clearSuccess() { clearTimeout(successTimeout); if(ui.successContainer) ui.successContainer.innerHTML = ''; }
 
-                if (requiresAggregation) {
-                    // *** Use fn: last instead of fn: mean ***
-                    fluxQuery += `|> aggregateWindow(every: ${aggregateInterval}, fn: last, createEmpty: false) `;
-                    console.log(`Using aggregate interval: ${aggregateInterval} (fn: last)`);
-                } else {
-                    fluxQuery += `|> sort(columns: ["_time"], desc: false) `; // Sort only if not aggregating
-s                 console.log("Using aggregate interval: Raw");
-                }
-
-
-                const response = await fetch(`${config.url}/api/v2/query?org=${encodeURIComponent(config.org)}`, { method: 'POST', headers: { 'Authorization': `Token ${config.token}`, 'Content-Type': 'application/vnd.flux', 'Accept': 'application/csv' }, body: fluxQuery });
-s             if (!response.ok) { const errorBody = await response.text(); console.error("InfluxDB Error Body:", errorBody); throw new Error(`HTTP ${response.status}: ${errorBody}`); }
-                const csv = await response.text();
-
-                processData(csv, requiresAggregation); // processData doesn't need changes for this
-                fetchSuccessful = true;
-                clearError();
-            } catch (error) {
-                console.error('❌ Fetch error:', error);
-                if (error.message.includes('HTTP 413') || error.message.includes('request too large')) { showError('Data request too large. Try a shorter time range.'); }
-                else if (error.message.includes('HTTP 401') || error.message.includes('unauthorized')) { showError('Authentication failed. Please check the API Token.'); }
-                 // Catch 503 error specifically
-                 else if (error.message.includes('HTTP 503') || error.message.includes('unavailable') || error.message.includes('timeout')) { showError('Connection timeout. Server might be unavailable or network issue.'); }
-                else { showError(`Connection error: ${error.message.substring(0, 100)}...`); }
-            } finally {
-                updateStatus(fetchSuccessful); // Update status based on success flag
-s             isUpdating = false;
-            }
-        }
-        // --- [END] EDITED DATA FETCHING ---
-
-        // --- DATA PROCESSING --- (updateCounter removed)
-        function processData(csv, isAggregated) { console.log(`📊 PROCESSING DATA... (Aggregated: ${isAggregated})`); const lines = csv.trim().split('\n'); const timeSeries = { voltage_filtered: [], voltage_raw: [], current_ma: [], power_w: [], soc_percent: [], ambient_temp_c: [], ambient_humidity_percent: [] }; const latestValues = {}; let totalPoints = 0; rawDataCache = []; for (let i = 0; i < lines.length; i++) { const line = lines[i].trim(); if (!line || line.startsWith('#') || (line.includes('_time') && line.includes('_value') && line.includes('_field'))) continue; const parts = line.split(','); if (parts.length < 8) continue; const timeStr = parts[5]?.trim(), valueStr = parts[6]?.trim(), field = parts[7]?.trim(); if (!timeStr || !valueStr || !field) continue; const time = new Date(timeStr), value = parseFloat(valueStr); if (isNaN(time.getTime()) || isNaN(value)) continue; rawDataCache.push({ timestamp: time.toISOString(), field: field, value: value }); if (timeSeries.hasOwnProperty(field)) { timeSeries[field].push({ x: time, y: value }); totalPoints++; } latestValues[field] = value; } console.log(`📦 Parsed ${totalPoints} data points`); console.log(`📝 Latest values:`, latestValues); forceUpdateValue(ui.voltageFiltered, 'card-voltage-filtered', latestValues['voltage_filtered'], 3, 'V'); forceUpdateValue(ui.voltageRaw, 'card-voltage-raw', latestValues['voltage_raw'], 3, 'V'); forceUpdateValue(ui.current, 'card-current', latestValues['current_ma'], 0, 'mA'); forceUpdateValue(ui.power, 'card-power', latestValues['power_w'], 2, 'W'); forceUpdateValue(ui.soc, 'card-soc', latestValues['soc_percent'], 1, '%'); forceUpdateValue(ui.temp, 'card-temp', latestValues['ambient_temp_c'], 1, '°C'); forceUpdateValue(ui.humidity, 'card-humidity', latestValues['ambient_humidity_percent'], 0, '%'); forceUpdateValue(ui.badReadings, 'card-bad', latestValues['bad_readings_total'], 0, ''); const badReadingsCount = latestValues['bad_readings_total'] !== undefined ? Math.round(latestValues['bad_readings_total']) : 0; const goodReadingsCount = totalPoints > 0 ? Math.max(0, totalPoints - badReadingsCount) : 0; forceUpdateValue(ui.goodReadings, 'card-good', goodReadingsCount, 0, ''); let status = 'IDLE', statusClass = 'status-idle'; if (latestValues['is_charging'] !== undefined && Math.round(latestValues['is_charging']) === 1) { status = 'CHARGING'; statusClass = 'status-charging'; } else if (latestValues['is_discharging'] !== undefined && Math.round(latestValues['is_discharging']) === 1) { status = 'DISCHARGING'; statusClass = 'status-discharging'; } if (ui.status) { ui.status.textContent = status; ui.status.className = statusClass; flashCard('card-status'); } /* updateCounter removed */ ui.dataPoints.textContent = totalPoints; if(charts.voltage) { charts.voltage.data.datasets[0].data = timeSeries.voltage_filtered; charts.voltage.data.datasets[1].data = timeSeries.voltage_raw; charts.voltage.update('none'); } if(charts.power) { charts.power.data.datasets[0].data = timeSeries.current_ma; charts.power.data.datasets[1].data = timeSeries.power_w; charts.power.update('none'); } if(charts.soc) { charts.soc.data.datasets[0].data = timeSeries.soc_percent; charts.soc.update('none'); } if(charts.env) { charts.env.data.datasets[0].data = timeSeries.ambient_temp_c; charts.env.data.datasets[1].data = timeSeries.ambient_humidity_percent; charts.env.update('none'); } console.log(`✅ UPDATE COMPLETE!`); }
-
-        // --- FORCE UPDATE VALUE & FLASH --- (Unchanged)
-        function forceUpdateValue(element, cardId, value, decimals, unit) { if (!element) { console.warn(`Element for card ${cardId} NOT FOUND!`); return; } const formattedValue = (value !== undefined && value !== null && !isNaN(value)) ? Number(value).toFixed(decimals) : '--'; element.textContent = formattedValue; const unitEl = element.nextElementSibling; if (unitEl && unitEl.classList.contains('metric-unit')) { unitEl.textContent = unit; } else { console.warn(`Unit element not found for ${element.id}`); element.textContent = formattedValue + (unit || ''); } flashCard(cardId); } function flashCard(cardId) { const card = document.getElementById(cardId); if (card) { card.classList.remove('flash'); void card.offsetWidth; card.classList.add('flash'); setTimeout(() => { card.classList.remove('flash'); }, 550); } }
-
-        // --- STATUS & MESSAGES --- (Unchanged)
-        function updateStatus(connected) { if (!ui.statusBadge || !ui.statusText || !ui.liveDot || !ui.lastUpdate) return; if (connected) { ui.statusBadge.className = 'status-badge status-connected'; ui.statusText.textContent = 'Connected'; ui.liveDot.style.display = 'inline-block'; ui.lastUpdate.textContent = new Date().toLocaleTimeString(); } else { ui.statusBadge.className = 'status-badge status-disconnected'; ui.statusText.textContent = 'Disconnected'; ui.liveDot.style.display = 'none'; ui.lastUpdate.textContent = 'Connection lost'; } } let errorTimeout, successTimeout; function showError(message) { clearTimeout(successTimeout); clearError(); if(ui.errorContainer) ui.errorContainer.innerHTML = `<div class="error-message">${message}</div>`; errorTimeout = setTimeout(clearError, 6000); } function clearError() { clearTimeout(errorTimeout); if(ui.errorContainer) ui.errorContainer.innerHTML = ''; } function showSuccess(message) { clearTimeout(errorTimeout); clearSuccess(); if(ui.successContainer) ui.successContainer.innerHTML = `<div class="success-message">${message}</div>`; successTimeout = setTimeout(clearSuccess, 3500); } function clearSuccess() { clearTimeout(successTimeout); if(ui.successContainer) ui.successContainer.innerHTML = ''; }
-
-        // --- Cleanup --- (Unchanged)
-        window.addEventListener('beforeunload', () => { if (updateInterval) clearInterval(updateInterval); });
-    </script>
+        // --- Cleanup --- (Unchanged)
+        window.addEventListener('beforeunload', () => { if (updateInterval) clearInterval(updateInterval); });
+    </script>
 </body>
 </html>
