@@ -3,1229 +3,449 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NCR18650B Monitor - Live Dashboard</title>
-    
+    <title>CEST VISTEC - Live Battery Monitor</title>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0"></script>
-    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        /* --- Base & Reset --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
         body {
-            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
-            background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
-            color: #fff;
+            font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background-color: #f8f9fa; /* Use a very light gray for the main background */
+            color: #343a40; /* Dark gray for text */
             padding: 20px;
             min-height: 100vh;
+            line-height: 1.6;
         }
-        
         .container {
             max-width: 1400px;
             margin: 0 auto;
+            padding: 0 15px; /* Add padding for container */
         }
-        
-        /* Header */
+
+        /* --- Header --- */
         .header {
             text-align: center;
-            margin-bottom: 30px;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
+            margin-bottom: 35px;
+            padding: 25px 20px;
+            background-color: #ffffff; /* White header background */
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
         }
-        
         .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
+            font-size: 2.1em;
+            margin-bottom: 8px;
             font-weight: 700;
+            color: #20398c; /* Main site blue */
         }
-        
+        .header .subtitle {
+             font-size: 1.1em;
+             color: #495057; /* Medium gray */
+             margin-bottom: 15px;
+        }
         .version-badge {
             display: inline-block;
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            padding: 8px 20px;
-            border-radius: 20px;
+            background: #0d6efd; /* Brighter blue for badge */
+            color: white;
+            padding: 5px 12px;
+            border-radius: 12px;
             font-weight: 600;
-            margin-top: 10px;
-            animation: versionPulse 2s infinite;
+            font-size: 0.85em;
+            margin-bottom: 15px;
         }
-        
-        @keyframes versionPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-        
         .company-link {
-            color: #60a5fa;
+            color: #20398c;
             text-decoration: none;
             font-size: 0.9em;
-            transition: color 0.3s;
-        }
-        
-        .company-link:hover {
-            color: #93c5fd;
-        }
-        
-        /* Status Bar */
-        .status-bar {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        
-        .status-badge {
-            padding: 10px 24px;
-            border-radius: 25px;
-            font-size: 14px;
             font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: color 0.2s ease;
         }
-        
-        .status-connected {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        }
-        
-        .status-disconnected {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        }
-        
-        .status-info {
-            background: rgba(59, 130, 246, 0.3);
-            backdrop-filter: blur(10px);
-        }
-        
-        .live-dot {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            background: #fff;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { 
-                opacity: 1; 
-                transform: scale(1);
-            }
-            50% { 
-                opacity: 0.4; 
-                transform: scale(0.8);
-            }
-        }
-        
-        /* Update Counter */
-        .update-counter {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            padding: 15px 25px;
-            border-radius: 15px;
-            font-weight: 700;
-            font-size: 1.2em;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            z-index: 9999;
-            animation: counterBounce 0.5s ease-out;
-        }
-        
-        @keyframes counterBounce {
-            0% { transform: scale(0.8); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-        
-        /* Configuration Panel (This is no longer used, but styles are kept for safety) */
-        .config-panel {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
+        .company-link:hover { color: #1a2f70; text-decoration: underline; }
 
-        /* Toolbar */
-        .toolbar {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: space-between;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .toolbar-section {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        
-        .toolbar select {
-            padding: 10px 15px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            background: rgba(0, 0, 0, 0.3);
-            color: #fff;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        
-        .toolbar select:focus {
-            outline: none;
-            border-color: #60a5fa;
-        }
-        
-        .custom-range {
-            display: none;
-            gap: 10px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        
-        .custom-range.active {
-            display: flex;
-        }
-        
-        .custom-range input {
-            padding: 8px 12px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            background: rgba(0, 0, 0, 0.3);
-            color: #fff;
-            font-size: 14px;
-        }
+        /* --- Status Bar --- */
+        .status-bar { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; }
+        .status-badge { padding: 8px 18px; border-radius: 18px; font-size: 0.85em; font-weight: 600; display: flex; align-items: center; gap: 7px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); border: 1px solid transparent; }
+        .status-connected { background-color: #d1e7dd; color: #0f5132; border-color: #badbcc;} /* Green tint */
+        .status-disconnected { background-color: #f8d7da; color: #842029; border-color: #f5c2c7;} /* Red tint */
+        .status-info { background-color: #e2e3e5; color: #41464b; border-color: #d3d6d8;} /* Gray tint */
+        .live-dot { display: inline-block; width: 8px; height: 8px; background: #198754; border-radius: 50%; animation: pulse 1.8s infinite ease-in-out; }
+        .status-disconnected .live-dot { display: none; }
+        @keyframes pulse { 0%, 100% { transform: scale(0.9); opacity: 0.7; } 50% { transform: scale(1.1); opacity: 1; } }
 
-        .btn {
-            padding: 12px 32px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
-        
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-        
-        /* Metrics Grid */
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .metric-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .metric-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.3), transparent);
-            transition: left 0.5s;
-        }
-        
-        .metric-card.flash::before {
-            left: 100%;
-        }
-        
-        .metric-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-        }
-        
-        .metric-label {
-            font-size: 14px;
-            color: #94a3b8;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .metric-value {
-            font-size: 32px;
-            font-weight: 700;
-            color: #fff;
-            display: block;
-            min-height: 50px;
-            line-height: 50px;
-        }
-        
-        .metric-unit {
-            font-size: 20px;
-            color: #94a3b8;
-            font-weight: 400;
-            margin-left: 5px;
-        }
-        
+        /* --- Update Counter --- */
+        .update-counter { position: fixed; top: 15px; right: 15px; background: #fff3cd; color: #664d03; border: 1px solid #ffecb5; padding: 8px 15px; border-radius: 6px; font-weight: 600; font-size: 0.9em; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); z-index: 1000; }
+
+        /* --- Toolbar --- */
+        .toolbar { background: #ffffff; border-radius: 8px; padding: 15px 20px; margin-bottom: 25px; display: flex; gap: 20px; flex-wrap: wrap; align-items: center; justify-content: space-between; border: 1px solid #dee2e6; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .toolbar-section { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .toolbar label { color: #495057 !important; font-weight: 600; font-size: 0.9em; margin-bottom: 0; }
+        .toolbar select, .custom-range input { padding: 8px 12px; border-radius: 6px; border: 1px solid #ced4da; background-color: #ffffff; color: #343a40; font-size: 0.9em; transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out; }
+        .toolbar select { cursor: pointer; }
+        .toolbar select:focus, .custom-range input:focus { outline: 0; border-color: #86b7fe; box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25); }
+        .custom-range { display: none; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .custom-range.active { display: flex; }
+        .btn { padding: 8px 18px; border: none; border-radius: 6px; font-size: 0.9em; font-weight: 600; cursor: pointer; transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease; user-select: none; }
+        .btn:active { transform: scale(0.98); }
+        .btn-secondary { background-color: #6c757d; color: white; border: 1px solid #6c757d; }
+        .btn-secondary:hover { background-color: #5a6268; border-color: #545b62; }
+
+        /* --- Metrics Grid --- */
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .metric-card { background: #ffffff; border-radius: 8px; padding: 18px 15px; text-align: center; border: 1px solid #dee2e6; transition: all 0.2s ease; position: relative; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.06); }
+        .metric-card::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(32, 57, 140, 0.08), transparent); transition: left 0.5s ease; }
+        .metric-card.flash::before { left: 100%; }
+        .metric-card:hover { transform: translateY(-4px); box-shadow: 0 5px 12px rgba(0, 0, 0, 0.08); border-color: #adb5bd;}
+        .metric-label { font-size: 0.75em; color: #6c757d; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; }
+        .metric-value { font-size: 1.8em; font-weight: 700; color: #212529; display: block; min-height: 40px; line-height: 40px; }
+        .metric-unit { font-size: 0.9em; color: #495057; font-weight: 400; margin-left: 4px; }
+        /* Specific Card Icons/Styles */
+        .metric-label > span { margin-right: 5px; } /* Space for emoji */
         /* Status colors */
-        .status-charging {
-            color: #10b981;
+        .status-charging { color: #198754; font-weight: 600; } .status-discharging { color: #ffc107; font-weight: 600; } .status-idle { color: #6c757d; font-weight: 600; }
+
+        /* --- Charts Container --- */
+        .charts-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .chart-card { background: #ffffff; border-radius: 8px; padding: 25px; border: 1px solid #dee2e6; box-shadow: 0 2px 4px rgba(0,0,0,0.06); }
+        .chart-card h3 { margin-bottom: 20px; color: #20398c; font-size: 1.1em; font-weight: 600; }
+        .chart-wrapper { position: relative; height: 300px; } /* Increased height */
+
+        /* --- Messages --- */
+        .message-container { position: fixed; top: 15px; left: 50%; transform: translateX(-50%); z-index: 1000; max-width: 450px; width: 95%; }
+        .error-message, .success-message { padding: 12px 20px; border-radius: 6px; margin-bottom: 10px; font-weight: 600; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15); animation: slideIn 0.3s ease-out; text-align: left; color: white; display: flex; align-items: center; gap: 10px;}
+        .error-message::before { content: '❌'; }
+        .success-message::before { content: '✅'; }
+        .error-message { background-color: #dc3545; border: 1px solid #b02a37; }
+        .success-message { background-color: #198754; border: 1px solid #146c43; }
+        @keyframes slideIn { from { transform: translateX(-50%) translateY(-60px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
+
+        /* --- Debug Panel --- */
+        .debug-panel { background: #e9ecef; border: 1px solid #dee2e6; color: #343a40; border-radius: 6px; padding: 15px; margin-top: 20px; font-family: 'Courier New', monospace; font-size: 0.8em; white-space: pre-wrap; display: none; max-height: 200px; overflow-y: auto; }
+
+        /* --- Responsive Adjustments --- */
+        @media (max-width: 992px) {
+            .charts-container { grid-template-columns: 1fr; } /* Single column charts earlier */
         }
-        
-        .status-discharging {
-            color: #fbbf24;
-        }
-        
-        .status-idle {
-            color: #94a3b8;
-        }
-        
-        /* Charts Container */
-        .charts-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .chart-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .chart-card h3 {
-            margin-bottom: 15px;
-            color: #60a5fa;
-            font-size: 18px;
-        }
-        
-        .chart-wrapper {
-            position: relative;
-            height: 300px;
-        }
-        
-        /* Messages */
-        .message-container {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            max-width: 400px;
-            width: 90%;
-        }
-        
-        .error-message, .success-message {
-            padding: 15px 20px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            font-weight: 600;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            animation: slideIn 0.3s ease-out;
-            text-align: center;
-        }
-        
-        .error-message {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        }
-        
-        .success-message {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        }
-        
-        @keyframes slideIn {
-            from {
-                transform: translateX(-50%) translateY(-100px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(-50%) translateY(0);
-                opacity: 1;
-            }
-        }
-        
-        /* Debug Panel */
-        .debug-panel {
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 20px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            white-space: pre-wrap;
-            display: none; /* Keep this hidden for public view */
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        /* Responsive */
         @media (max-width: 768px) {
-            .header h1 {
-                font-size: 1.8em;
-            }
-            
-            .charts-container {
-                grid-template-columns: 1fr;
-            }
-            
-            .metrics-grid {
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            }
-            
-            .metric-value {
-                font-size: 24px;
-            }
+            body { padding: 10px; }
+            .container { padding: 0 10px; }
+            .header { padding: 15px; margin-bottom: 25px; }
+            .header h1 { font-size: 1.7em; }
+            .header .subtitle { font-size: 1em; }
+            .metrics-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px; }
+            .metric-value { font-size: 1.5em; min-height: 35px; line-height: 35px; }
+            .metric-unit { font-size: 0.8em; }
+            .toolbar { padding: 10px 15px; flex-direction: column; align-items: stretch; gap: 15px; }
+            .toolbar-section { justify-content: space-between; }
+            .toolbar-section:last-child { justify-content: center; } /* Center refresh button */
+            .btn { padding: 7px 15px; font-size: 0.85em; }
+            .status-badge { padding: 6px 15px; font-size: 0.8em; }
+            .update-counter { font-size: 0.85em; padding: 6px 12px; }
+            .charts-container { gap: 15px; margin-bottom: 25px; }
+            .chart-card { padding: 15px; }
+            .chart-card h3 { font-size: 1em; margin-bottom: 15px; }
+            .chart-wrapper { height: 250px; }
+            .message-container { width: 90%; }
         }
+         @media (max-width: 480px) {
+             .metrics-grid { grid-template-columns: repeat(2, 1fr); } /* Ensure 2 columns on small screens */
+             .metric-value { font-size: 1.4em; }
+             .header h1 { font-size: 1.5em; }
+             .toolbar-section { flex-direction: column; align-items: stretch; gap: 8px; }
+             .custom-range { flex-direction: column; align-items: stretch; }
+             .custom-range label { margin-bottom: 2px; }
+             .custom-range input { width: 100%; }
+             .custom-range button { margin-top: 5px; }
+         }
     </style>
 </head>
 <body>
-    <div id="updateCounter" class="update-counter">
-        Updates: <span id="updateCount">0</span>
-    </div>
-    
+    <div id="updateCounter" class="update-counter"> Updates: <span id="updateCount">0</span> </div>
     <div class="container">
         <div class="header">
-            <h1>⚡ NCR18650B Battery Monitor</h1>
-            <div class="version-badge">
-                🔥 LIVE PUBLIC DASHBOARD 🔥
-            </div>
-            <p style="margin-top: 10px; font-size: 1.1em;">Real-Time Battery Pack Monitoring System</p>
-            <p style="margin-top: 5px; font-size: 0.9em; color: #60a5fa;">
-                <strong>Watch the update counter above!</strong> It increases every 2 seconds when values update.
-            </p>
-            <a href="https://www.cestvistec.com/" class="company-link" target="_blank">
-                🌐 CESTVISTEC - Battery Technology Solutions
-            </a>
+            <h1><span style="font-size: 1.1em;">⚡</span> Battery Monitor Dashboard</h1>
+            <p class="subtitle">Real-Time NCR18650B Monitoring</p>
+            <div class="version-badge"> LIVE DATA </div><br>
+            <a href="https://www.cestvistec.com/" class="company-link" target="_blank" rel="noopener noreferrer"> 🌐 CEST VISTEC - Battery Technology Solutions </a>
         </div>
-        
+
         <div class="status-bar">
-            <div id="statusBadge" class="status-badge status-disconnected">
-                <span id="liveDot" class="live-dot" style="display: none;"></span>
-                <span id="statusText">Connecting...</span>
-            </div>
-            <div class="status-badge status-info">
-                <span id="lastUpdate">Waiting for data...</span>
-            </div>
-            <div class="status-badge status-info">
-                <span id="dataPoints">Points: 0</span>
-            </div>
+            <div id="statusBadge" class="status-badge status-disconnected"> <span id="liveDot" class="live-dot"></span> <span id="statusText">Connecting...</span> </div>
+            <div class="status-badge status-info"> <span>Last Update:</span>&nbsp;<span id="lastUpdate">Waiting...</span> </div>
+            <div class="status-badge status-info"> <span>Points:</span>&nbsp;<span id="dataPoints">0</span> </div>
         </div>
-        
-        <div class="message-container">
-            <div id="errorContainer"></div>
-            <div id="successContainer"></div>
-        </div>
-        
-        <div id="configPanel" class="config-panel" style="display: none;">
-            <h3>📡 InfluxDB Configuration</h3>
-            </div>
-        
+
+        <div class="message-container"> <div id="errorContainer"></div> <div id="successContainer"></div> </div>
+
         <div id="toolbar" class="toolbar">
-            <div class="toolbar-section">
-                <label style="color: #94a3b8; font-weight: 600;">Time Range:</label>
-                <select id="timeRangeSelect" onchange="handleTimeRangeChange()">
-                    <option value="5m">Last 5 Minutes</option>
-                    <option value="15m">Last 15 Minutes</option>
-                    <option value="30m">Last 30 Minutes</option>
-                    <option value="1h">Last 1 Hour</option>
-                    <option value="3h">Last 3 Hours</option>
-                    <option value="6h">Last 6 Hours</option>
-                    <option value="12h">Last 12 Hours</option>
-                    <option value="24h">Last 24 Hours</option>
-                    <option value="7d">Last 7 Days</option>
-                    <option value="custom">Custom Range</option>
-                </select>
-                
-                <div id="customRange" class="custom-range">
-                    <label style="color: #94a3b8;">From:</label>
-                    <input type="datetime-local" id="startTime">
-                    <label style="color: #94a3b8;">To:</label>
-                    <input type="datetime-local" id="endTime">
-                    <button class="btn btn-secondary" onclick="applyCustomRange()">Apply</button>
-                </div>
-            </div>
-            
-            <div class="toolbar-section">
-                <button class="btn btn-secondary" onclick="refreshData()">🔄 Refresh</button>
-                </div>
+             <div class="toolbar-section">
+                 <label for="timeRangeSelect">Time Range:</label>
+                 <select id="timeRangeSelect" onchange="handleTimeRangeChange()">
+                     <option value="5m">Last 5 Min</option>
+                     <option value="15m">Last 15 Min</option>
+                     <option value="30m">Last 30 Min</option>
+                     <option value="1h">Last 1 Hour</option>
+                     <option value="3h">Last 3 Hours</option>
+                     <option value="6h">Last 6 Hours</option>
+                     <option value="12h">Last 12 Hours</option>
+                     <option value="24h">Last 24 Hours</option>
+                     <option value="7d">Last 7 Days</option>
+                     <option value="custom">Custom</option>
+                 </select>
+                 <div id="customRange" class="custom-range"> <label for="startTime">From:</label> <input type="datetime-local" id="startTime"> <label for="endTime">To:</label> <input type="datetime-local" id="endTime"> <button class="btn btn-secondary" onclick="applyCustomRange()">Apply</button> </div>
+             </div>
+             <div class="toolbar-section"> <button class="btn btn-secondary" onclick="refreshData()">🔄 Refresh</button> </div>
         </div>
-        
+
         <div id="metricsGrid" class="metrics-grid">
-            <div class="metric-card" id="card-voltage-filtered">
-                <div class="metric-label">🔋 Voltage (Filtered)</div>
-                <div class="metric-value">
-                    <span id="voltageFiltered">--</span>
-                    <span class="metric-unit">V</span>
-                </div>
-            </div>
-            
-            <div class="metric-card" id="card-voltage-raw">
-                <div class="metric-label">📊 Voltage (Raw)</div>
-                <div class="metric-value">
-                    <span id="voltageRaw">--</span>
-                    <span class="metric-unit">V</span>
-                </div>
-            </div>
-            
-            <div class="metric-card" id="card-current">
-                <div class="metric-label">⚡ Current</div>
-                <div class="metric-value">
-                    <span id="current">--</span>
-                    <span class="metric-unit">mA</span>
-                </div>
-            </div>
-            
-            <div class="metric-card" id="card-power">
-                <div class="metric-label">💪 Power</div>
-                <div class="metric-value">
-                    <span id="power">--</span>
-                    <span class="metric-unit">W</span>
-                </div>
-            </div>
-            
-            <div class="metric-card" id="card-soc">
-                <div class="metric-label">🔋 State of Charge</div>
-                <div class="metric-value">
-                    <span id="soc">--</span>
-                    <span class="metric-unit">%</span>
-                </div>
-            </div>
-            
-            <div class="metric-card" id="card-temp">
-                <div class="metric-label">🌡️ Temperature</div>
-                <div class="metric-value">
-                    <span id="temp">--</span>
-                    <span class="metric-unit">°C</span>
-                </div>
-            </div>
-            
-            <div class="metric-card" id="card-humidity">
-                <div class="metric-label">💧 Humidity</div>
-                <div class="metric-value">
-                    <span id="humidity">--</span>
-                    <span class="metric-unit">%</span>
-                </div>
-            </div>
-            
-            <div class="metric-card" id="card-status">
-                <div class="metric-label">📈 Status</div>
-                <div class="metric-value">
-                    <span id="status">IDLE</span>
-                </div>
-            </div>
-            
-            <div class="metric-card" id="card-good">
-                <div class="metric-label">✅ Good Readings</div>
-                <div class="metric-value">
-                    <span id="goodReadings">--</span>
-                </div>
-            </div>
-            
-            <div class="metric-card" id="card-bad">
-                <div class="metric-label">❌ Bad Readings</div>
-                <div class="metric-value">
-                    <span id="badReadings">--</span>
-                </div>
-            </div>
+             <div class="metric-card" id="card-voltage-filtered"> <div class="metric-label"><span>🔋</span> Voltage (Filtered)</div> <div class="metric-value"> <span id="voltageFiltered">--</span><span class="metric-unit">V</span> </div> </div>
+             <div class="metric-card" id="card-voltage-raw"> <div class="metric-label"><span>📊</span> Voltage (Raw)</div> <div class="metric-value"> <span id="voltageRaw">--</span><span class="metric-unit">V</span> </div> </div>
+             <div class="metric-card" id="card-current"> <div class="metric-label"><span>⚡</span> Current</div> <div class="metric-value"> <span id="current">--</span><span class="metric-unit">mA</span> </div> </div>
+             <div class="metric-card" id="card-power"> <div class="metric-label"><span>💪</span> Power</div> <div class="metric-value"> <span id="power">--</span><span class="metric-unit">W</span> </div> </div>
+             <div class="metric-card" id="card-soc"> <div class="metric-label"><span>🔋</span> State of Charge</div> <div class="metric-value"> <span id="soc">--</span><span class="metric-unit">%</span> </div> </div>
+             <div class="metric-card" id="card-temp"> <div class="metric-label"><span>🌡️</span> Temperature</div> <div class="metric-value"> <span id="temp">--</span><span class="metric-unit">°C</span> </div> </div>
+             <div class="metric-card" id="card-humidity"> <div class="metric-label"><span>💧</span> Humidity</div> <div class="metric-value"> <span id="humidity">--</span><span class="metric-unit">%</span> </div> </div>
+             <div class="metric-card" id="card-status"> <div class="metric-label"><span>📈</span> Status</div> <div class="metric-value"> <span id="status">IDLE</span> </div> </div>
+             <div class="metric-card" id="card-good"> <div class="metric-label"><span>✅</span> Good Readings</div> <div class="metric-value"> <span id="goodReadings">--</span> </div> </div>
+             <div class="metric-card" id="card-bad"> <div class="metric-label"><span>❌</span> Bad Readings</div> <div class="metric-value"> <span id="badReadings">--</span> </div> </div>
         </div>
-        
+
         <div id="chartsContainer" class="charts-container">
-            <div class="chart-card">
-                <h3>📊 Voltage Monitoring</h3>
-                <div class="chart-wrapper">
-                    <canvas id="voltageChart"></canvas>
-                </div>
-            </div>
-            
-            <div class="chart-card">
-                <h3>⚡ Current & Power</h3>
-                <div class="chart-wrapper">
-                    <canvas id="powerChart"></canvas>
-                </div>
-            </div>
-            
-            <div class="chart-card">
-                <h3>🔋 State of Charge</h3>
-                <div class="chart-wrapper">
-                    <canvas id="socChart"></canvas>
-                </div>
-            </div>
-            
-            <div class="chart-card">
-                <h3>🌡️ Environmental Conditions</h3>
-                <div class="chart-wrapper">
-                    <canvas id="envChart"></canvas>
-                </div>
-            </div>
+            <div class="chart-card"> <h3>📊 Voltage Monitoring</h3> <div class="chart-wrapper"> <canvas id="voltageChart"></canvas> </div> </div>
+            <div class="chart-card"> <h3>⚡ Current & Power</h3> <div class="chart-wrapper"> <canvas id="powerChart"></canvas> </div> </div>
+            <div class="chart-card"> <h3>🔋 State of Charge</h3> <div class="chart-wrapper"> <canvas id="socChart"></canvas> </div> </div>
+            <div class="chart-card"> <h3>🌡️ Environmental Conditions</h3> <div class="chart-wrapper"> <canvas id="envChart"></canvas> </div> </div>
         </div>
-        
-        <div id="debugInfo" class="debug-panel"></div>
-    </div>
-    
+
+        <div id="debugInfo" class="debug-panel"></div> </div>
+
     <script>
-        // ========================================
-        // GLOBAL VARIABLES
-        // ========================================
-        
-        // Configuration is now HARDCODED for public access
-        // ⚠️ ATTENTION: Use a READ-ONLY token here for safety!
-        let config = {
-            url: "https://us-east-1-1.aws.cloud2.influxdata.com",
-            token: "fRjbZpkh28B7HIaqHyR4A62Jr2bGwiC8Hcc-LwaCUxtKojBMH39CscUEuqp9PTDuqab_3yEfFGtCtsdCYD52Fw==", // ⚠️ PLEASE REPLACE WITH A READ-ONLY TOKEN
-            org: "060e7983bb6be38e",
-            bucket: "solar_bucket"
-        };
-        
-        let updateInterval = null;
-        let charts = {};
-        let debugMode = false; // Debug mode is OFF by default for public
-        let currentTimeRange = '5m';
-        let rawDataCache = [];
-        let isUpdating = false;
-        let updateCounter = 0; // Track number of updates
-        
-        // ========================================
-        // INITIALIZATION
-        // ========================================
+        // --- GLOBAL VARIABLES ---
+        const config = { url: "https://us-east-1-1.aws.cloud2.influxdata.com", token: "fRjbZpkh28B7HIaqHyR4A62Jr2bGwiC8Hcc-LwaCUxtKojBMH39CscUEuqp9PTDuqab_3yEfFGtCtsdCYD52Fw==", org: "060e7983bb6be38e", bucket: "solar_bucket" };
+        let updateInterval = null, charts = {}, currentTimeRange = '5m', rawDataCache = [], isUpdating = false, updateCounter = 0;
+        let aggregateInterval = '5s'; // Track current interval globally
+
+        // --- DOM Elements Cache (Optional but good practice) ---
+        const ui = {}; // Object to hold references to UI elements
+
+        // --- INITIALIZATION ---
         window.addEventListener('load', () => {
-            console.log('🚀 ========================================');
-            console.log('🚀 NCR18650B Battery Monitor v3.0 - PUBLIC');
-            console.log('🚀 Auto-connecting to InfluxDB...');
-            console.log('🚀 ========================================');
-            
-            // Auto-start monitoring on page load
-            // No need to check localStorage or show config panel
+            console.log('🚀 CEST VISTEC Battery Monitor - Production v1.0');
+            cacheDOMElements(); // Cache elements on load
             startMonitoring();
         });
-        
-        // ========================================
-        // CONFIGURATION
-        // ========================================
-        
-        // This function is no longer needed by the user,
-        // but we keep it in case you want to change the code manually
-        function saveConfig() {
-            // This function is no longer called by any button
-            console.log("Configuration is hardcoded in the script.");
+
+        // --- Cache UI Elements ---
+        function cacheDOMElements() {
+            ui.statusBadge = document.getElementById('statusBadge');
+            ui.statusText = document.getElementById('statusText');
+            ui.liveDot = document.getElementById('liveDot');
+            ui.lastUpdate = document.getElementById('lastUpdate');
+            ui.dataPoints = document.getElementById('dataPoints');
+            ui.errorContainer = document.getElementById('errorContainer');
+            ui.successContainer = document.getElementById('successContainer');
+            ui.timeRangeSelect = document.getElementById('timeRangeSelect');
+            ui.customRangeDiv = document.getElementById('customRange');
+            ui.startTimeInput = document.getElementById('startTime');
+            ui.endTimeInput = document.getElementById('endTime');
+            ui.updateCountSpan = document.getElementById('updateCount');
+            // Cache metric spans
+            ui.voltageFiltered = document.getElementById('voltageFiltered');
+            ui.voltageRaw = document.getElementById('voltageRaw');
+            ui.current = document.getElementById('current');
+            ui.power = document.getElementById('power');
+            ui.soc = document.getElementById('soc');
+            ui.temp = document.getElementById('temp');
+            ui.humidity = document.getElementById('humidity');
+            ui.status = document.getElementById('status');
+            ui.goodReadings = document.getElementById('goodReadings');
+            ui.badReadings = document.getElementById('badReadings');
+            // Cache canvases
+            ui.voltageChartCanvas = document.getElementById('voltageChart');
+            ui.powerChartCanvas = document.getElementById('powerChart');
+            ui.socChartCanvas = document.getElementById('socChart');
+            ui.envChartCanvas = document.getElementById('envChart');
+            // Cache toolbar and grids for display toggling (if needed later)
+            ui.toolbar = document.getElementById('toolbar');
+            ui.metricsGrid = document.getElementById('metricsGrid');
+            ui.chartsContainer = document.getElementById('chartsContainer');
         }
-        
-        // ========================================
-        // START MONITORING
-        // ========================================
+
+        // --- START MONITORING ---
         function startMonitoring() {
-            // No longer need to hide configPanel, it's hidden by default
-            // document.getElementById('configPanel').style.display = 'none';
-            
-            // Show all the data elements
-            document.getElementById('toolbar').style.display = 'flex';
-            document.getElementById('metricsGrid').style.display = 'grid';
-            document.getElementById('chartsContainer').style.display = 'grid';
-            
-            if (debugMode) {
-                document.getElementById('debugInfo').style.display = 'block';
-            }
-            
+            // Elements are visible by default now, no need to show them
             initCharts();
-            fetchData();
-            
-            if (updateInterval) {
-                clearInterval(updateInterval);
-            }
-            
-            updateInterval = setInterval(() => {
-                if (!isUpdating) {
-                    fetchData();
-                }
-            }, 2000); // Refreshes every 2 seconds
-            
-            console.log('✅ Monitoring started - updates every 2 seconds');
+            fetchData(); // Initial fetch
+            if (updateInterval) clearInterval(updateInterval);
+            // Auto-refresh every 3 seconds for faster updates
+            updateInterval = setInterval(() => { if (!isUpdating) fetchData(); }, 3000);
+            console.log('✅ Monitoring started - refreshing every 3 seconds');
         }
-        
-        // ========================================
-        // TIME RANGE FUNCTIONS
-        // ========================================
+
+        // --- TIME RANGE FUNCTIONS ---
         function handleTimeRangeChange() {
-            const select = document.getElementById('timeRangeSelect');
-            currentTimeRange = select.value;
-            
+            currentTimeRange = ui.timeRangeSelect.value;
             if (currentTimeRange === 'custom') {
-                document.getElementById('customRange').classList.add('active');
-                const now = new Date();
-                const oneHourAgo = new Date(now - 60 * 60 * 1000);
-                document.getElementById('endTime').value = formatDateTimeLocal(now);
-                document.getElementById('startTime').value = formatDateTimeLocal(oneHourAgo);
-            } else {
-                document.getElementById('customRange').classList.remove('active');
-                fetchData();
-            }
+                ui.customRangeDiv.classList.add('active'); const now = new Date(), oneHourAgo = new Date(now - 3600000);
+                ui.endTimeInput.value = formatDateTimeLocal(now); ui.startTimeInput.value = formatDateTimeLocal(oneHourAgo);
+            } else { ui.customRangeDiv.classList.remove('active'); fetchData(); }
         }
-        
-        function applyCustomRange() {
-            fetchData();
-        }
-        
-        function formatDateTimeLocal(date) {
-            const pad = (n) => n.toString().padStart(2, '0');
-            return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-        }
-        
+        function applyCustomRange() { fetchData(); }
+        function formatDateTimeLocal(date) { const pad = (n) => String(n).padStart(2, '0'); return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`; }
         function getTimeRangeQuery() {
-            if (currentTimeRange === 'custom') {
-                const start = document.getElementById('startTime').value;
-                const end = document.getElementById('endTime').value;
-                
-                if (!start || !end) {
-                    showError('Please select both start and end times');
-                    return null;
-                }
-                
-                return `range(start: ${new Date(start).toISOString()}, stop: ${new Date(end).toISOString()})`;
-            } else {
-                return `range(start: -${currentTimeRange})`;
-            }
+             if (currentTimeRange === 'custom') { const start = ui.startTimeInput.value, end = ui.endTimeInput.value; if (!start || !end) { showError('Select start and end times'); return null; } return `range(start: ${new Date(start).toISOString()}, stop: ${new Date(end).toISOString()})`; }
+             else { return `range(start: -${currentTimeRange})`; }
         }
-        
-        function refreshData() {
-            clearError();
-            clearSuccess();
-            fetchData();
-            showSuccess('Data refreshed successfully');
-        }
-        
-        // ========================================
-        // CHART INITIALIZATION
-        // ========================================
+        function refreshData() { clearError(); clearSuccess(); fetchData(); showSuccess('Data refreshed'); }
+
+        // --- CHART INITIALIZATION (Restyled) ---
         function initCharts() {
-            const chartOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: false,
-                interaction: {
-                    mode: 'index',
-                    intersect: false,
-                },
-                scales: {
-                    x: {
-                        type: 'time',
-                        time: {
-                            unit: 'minute',
-                            displayFormats: {
-                                minute: 'HH:mm',
-                                hour: 'MMM dd HH:mm',
-                                day: 'MMM dd'
-                            }
-                        },
-                        ticks: { 
-                            color: '#94a3b8',
-                            maxTicksLimit: 10
-                        },
-                        grid: { color: 'rgba(148, 163, 184, 0.1)' }
-                    },
-                    y: {
-                        ticks: { color: '#94a3b8' },
-                        grid: { color: 'rgba(148, 163, 184, 0.1)' }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        labels: { 
-                            color: '#fff',
-                            font: {
-                                size: 12,
-                                weight: 600
-                            }
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        titleColor: '#fff',
-                        bodyColor: '#fff',
-                        borderColor: 'rgba(255, 255, 255, 0.2)',
-                        borderWidth: 1
-                    }
-                }
-            };
-            
-            charts.voltage = new Chart(document.getElementById('voltageChart'), {
-                type: 'line',
-                data: {
-                    datasets: [
-                        {
-                            label: 'Filtered (V)',
-                            data: [],
-                            borderColor: '#10b981',
-                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                            fill: true,
-                            tension: 0.4,
-                            borderWidth: 2
-                        },
-                        {
-                            label: 'Raw (V)',
-                            data: [],
-                            borderColor: '#60a5fa',
-                            backgroundColor: 'rgba(96, 165, 250, 0.1)',
-                            fill: true,
-                            tension: 0.1,
-                            borderWidth: 1
-                        }
-                    ]
-                },
-                options: chartOptions
-            });
-            
-            charts.power = new Chart(document.getElementById('powerChart'), {
-                type: 'line',
-                data: {
-                    datasets: [
-                        {
-                            label: 'Current (mA)',
-                            data: [],
-                            borderColor: '#fbbf24',
-                            yAxisID: 'y',
-                            tension: 0.4,
-                            borderWidth: 2
-                        },
-                        {
-                            label: 'Power (W)',
-                            data: [],
-                            borderColor: '#f87171',
-                            yAxisID: 'y1',
-                            tension: 0.4,
-                            borderWidth: 2
-                        }
-                    ]
-                },
-                options: {
-                    ...chartOptions,
-                    scales: {
-                        ...chartOptions.scales,
-                        y: {
-                            ...chartOptions.scales.y,
-                            position: 'left',
-                            title: { display: true, text: 'Current (mA)', color: '#94a3b8' }
-                        },
-                        y1: {
-                            ...chartOptions.scales.y,
-                            position: 'right',
-                            title: { display: true, text: 'Power (W)', color: '#94a3b8' },
-                            grid: { drawOnChartArea: false }
-                        }
-                    }
-                }
-            });
-            
-            charts.soc = new Chart(document.getElementById('socChart'), {
-                type: 'line',
-                data: {
-                    datasets: [{
-                        label: 'State of Charge (%)',
-                        data: [],
-                        borderColor: '#a78bfa',
-                        backgroundColor: 'rgba(167, 139, 250, 0.1)',
-                        fill: true,
-                        tension: 0.4,
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    ...chartOptions,
-                    scales: {
-                        ...chartOptions.scales,
-                        y: {
-                            ...chartOptions.scales.y,
-                            min: 0,
-                            max: 100
-                        }
-                    }
-                }
-            });
-            
-            charts.env = new Chart(document.getElementById('envChart'), {
-                type: 'line',
-                data: {
-                    datasets: [
-                        {
-                            label: 'Temperature (°C)',
-                            data: [],
-                            borderColor: '#f87171',
-                            yAxisID: 'y',
-                            tension: 0.4,
-                            borderWidth: 2
-                        },
-                        {
-                            label: 'Humidity (%)',
-                            data: [],
-                            borderColor: '#60a5fa',
-                            yAxisID: 'y1',
-                            tension: 0.4,
-                            borderWidth: 2
-                        }
-                    ]
-                },
-                options: {
-                    ...chartOptions,
-                    scales: {
-                        ...chartOptions.scales,
-                        y: {
-                            ...chartOptions.scales.y,
-                            position: 'left',
-                            title: { display: true, text: 'Temp (°C)', color: '#94a3b8' }
-                        },
-                        y1: {
-                            ...chartOptions.scales.y,
-                            position: 'right',
-                            title: { display: true, text: 'Humidity (%)', color: '#94a3b8' },
-                            grid: { drawOnChartArea: false }
-                        }
-                    }
-                }
-            });
-            
+            const chartOptions = { responsive: true, maintainAspectRatio: false, animation: false, interaction: { mode: 'index', intersect: false }, scales: { x: { type: 'time', time: { unit: 'minute', displayFormats: { minute: 'HH:mm', hour: 'MMM dd HH:mm', day: 'MMM dd' } }, ticks: { color: '#6c757d', maxTicksLimit: 10, font: {size: 10} }, grid: { color: 'rgba(0, 0, 0, 0.05)' }, border: { color: 'rgba(0, 0, 0, 0.08)'} }, y: { ticks: { color: '#6c757d', font: {size: 10} }, grid: { color: 'rgba(0, 0, 0, 0.05)' }, border: { color: 'rgba(0, 0, 0, 0.08)'} } }, plugins: { legend: { labels: { color: '#343a40', font: { size: 11, weight: 600 }, boxWidth: 15, padding: 15 } }, tooltip: { backgroundColor: 'rgba(0, 0, 0, 0.8)', titleColor: '#fff', bodyColor: '#fff', borderColor: 'rgba(0, 0, 0, 0.1)', borderWidth: 1, padding: 8, boxPadding: 4 } } };
+            const colorFilteredVoltage = '#198754', colorRawVoltage = '#0d6efd', colorCurrent = '#ffc107', colorPower = '#dc3545', colorSoC = '#6f42c1', colorTemp = '#fd7e14', colorHumidity = '#0dcaf0';
+            const defaultLineOptions = { fill: true, tension: 0.3, borderWidth: 1.8, pointRadius: 0, pointHoverRadius: 4 }; // Common style for lines
+
+            charts.voltage = new Chart(ui.voltageChartCanvas, { type: 'line', data: { datasets: [ { label: 'Filtered (V)', data: [], borderColor: colorFilteredVoltage, backgroundColor: 'rgba(25, 135, 84, 0.08)', ...defaultLineOptions }, { label: 'Raw (V)', data: [], borderColor: colorRawVoltage, backgroundColor: 'rgba(13, 110, 253, 0.08)', tension: 0.1, borderWidth: 1.5, pointRadius: 0 } ]}, options: chartOptions });
+            charts.power = new Chart(ui.powerChartCanvas, { type: 'line', data: { datasets: [ { label: 'Current (mA)', data: [], borderColor: colorCurrent, backgroundColor: 'rgba(255, 193, 7, 0.08)', yAxisID: 'y', ...defaultLineOptions }, { label: 'Power (W)', data: [], borderColor: colorPower, backgroundColor: 'rgba(220, 53, 69, 0.08)', yAxisID: 'y1', ...defaultLineOptions } ]}, options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, position: 'left', title: { display: true, text: 'Current (mA)', color: '#6c757d', font: {size: 10} } }, y1: { ...chartOptions.scales.y, position: 'right', title: { display: true, text: 'Power (W)', color: '#6c757d', font: {size: 10} }, grid: { drawOnChartArea: false } } }} });
+            charts.soc = new Chart(ui.socChartCanvas, { type: 'line', data: { datasets: [{ label: 'State of Charge (%)', data: [], borderColor: colorSoC, backgroundColor: 'rgba(111, 66, 193, 0.08)', ...defaultLineOptions }]}, options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, min: 0, max: 100 } } } });
+            charts.env = new Chart(ui.envChartCanvas, { type: 'line', data: { datasets: [ { label: 'Temperature (°C)', data: [], borderColor: colorTemp, backgroundColor: 'rgba(253, 126, 20, 0.08)', yAxisID: 'y', ...defaultLineOptions }, { label: 'Humidity (%)', data: [], borderColor: colorHumidity, backgroundColor: 'rgba(13, 202, 240, 0.08)', yAxisID: 'y1', ...defaultLineOptions } ]}, options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, position: 'left', title: { display: true, text: 'Temp (°C)', color: '#6c757d', font: {size: 10} } }, y1: { ...chartOptions.scales.y, position: 'right', title: { display: true, text: 'Humidity (%)', color: '#6c757d', font: {size: 10} }, grid: { drawOnChartArea: false } } }} });
             console.log('✅ Charts initialized');
         }
-        
-        // ========================================
-        // DATA FETCHING
-        // ========================================
+
+        // --- DATA FETCHING (with Aggregation) ---
         async function fetchData() {
-            if (isUpdating) {
-                console.log('⏳ Update in progress, skipping...');
-                return;
-            }
-            
-            isUpdating = true;
-            console.log(`\n🔄 [${new Date().toLocaleTimeString()}] FETCHING DATA...`);
-            
+            if (isUpdating) return; isUpdating = true; console.log(`\n🔄 [${new Date().toLocaleTimeString()}] FETCHING DATA...`);
             try {
-                const timeRange = getTimeRangeQuery();
-                if (!timeRange) {
-                    isUpdating = false;
-                    return;
+                const timeRange = getTimeRangeQuery(); if (!timeRange) { isUpdating = false; return; }
+                // Determine aggregation interval
+                let currentInterval = '5s'; // Default: every 5 seconds for 5m range
+                if (['15m', '30m'].includes(currentTimeRange)) { currentInterval = '15s'; }
+                else if (['1h', '3h'].includes(currentTimeRange)) { currentInterval = '1m'; }
+                else if (['6h', '12h', '24h'].includes(currentTimeRange)) { currentInterval = '5m'; }
+                else if (['7d'].includes(currentTimeRange) || currentTimeRange === 'custom') { currentInterval = '15m'; }
+                // Optional: Disable for very short ranges
+                 // if (['5m'].includes(currentTimeRange)) { currentInterval = ''; } // Uncomment to see raw data for 5m
+
+                aggregateInterval = currentInterval; // Update global var for processData
+                let requiresAggregation = !!aggregateInterval;
+
+                // Build Query
+                let fluxQuery = ` from(bucket: "${config.bucket}") |> ${timeRange} |> filter(fn: (r) => r["_measurement"] == "ncr18650b_power_data") |> filter(fn: (r) => r["battery_type"] == "NCR18650B_1s3p") |> filter(fn: (r) => r["_field"] == "voltage_filtered" or r["_field"] == "voltage_raw" or r["_field"] == "current_ma" or r["_field"] == "power_w" or r["_field"] == "soc_percent" or r["_field"] == "ambient_temp_c" or r["_field"] == "ambient_humidity_percent" or r["_field"] == "bad_readings_total" or r["_field"] == "is_charging" or r["_field"] == "is_discharging") `;
+                if (requiresAggregation) {
+                    // Use 'mean' aggregation. Status fields (is_charging etc.) will be averaged, handle this in processData.
+                    fluxQuery += `|> aggregateWindow(every: ${aggregateInterval}, fn: mean, createEmpty: false) `;
+                } else {
+                    fluxQuery += `|> sort(columns: ["_time"], desc: false) `; // Sort only raw data
                 }
-                
-                const query = `
-from(bucket: "${config.bucket}")
-  |> ${timeRange}
-  |> filter(fn: (r) => r["_measurement"] == "ncr18650b_power_data")
-  |> filter(fn: (r) => r["battery_type"] == "NCR18650B_1s3p")
-  |> filter(fn: (r) => 
-    r["_field"] == "voltage_filtered" or
-    r["_field"] == "voltage_raw" or 
-    r["_field"] == "current_ma" or 
-    r["_field"] == "power_w" or 
-    r["_field"] == "soc_percent" or
-    r["_field"] == "ambient_temp_c" or
-    r["_field"] == "ambient_humidity_percent" or
-    r["_field"] == "bad_readings_total" or
-    r["_field"] == "is_charging" or
-    r["_field"] == "is_discharging"
-  )
-  |> sort(columns: ["_time"], desc: false)
-`;
-                
-                const response = await fetch(`${config.url}/api/v2/query?org=${encodeURIComponent(config.org)}`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Token ${config.token}`,
-                        'Content-Type': 'application/vnd.flux',
-                        'Accept': 'application/csv'
-                    },
-                    body: query
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
-                }
-                
+
+                console.log("Using aggregate interval:", aggregateInterval || "Raw");
+                const response = await fetch(`${config.url}/api/v2/query?org=${encodeURIComponent(config.org)}`, { method: 'POST', headers: { 'Authorization': `Token ${config.token}`, 'Content-Type': 'application/vnd.flux', 'Accept': 'application/csv' }, body: fluxQuery });
+                if (!response.ok) { const errorBody = await response.text(); console.error("InfluxDB Error Body:", errorBody); throw new Error(`HTTP ${response.status}: ${errorBody}`); }
                 const csv = await response.text();
-                processData(csv);
-                updateStatus(true);
-                clearError();
-                
+                processData(csv, requiresAggregation);
+                updateStatus(true); clearError(); // Clear errors on success
             } catch (error) {
-                console.error('❌ Fetch error:', error);
-                updateStatus(false);
-                showError(`Connection failed: ${error.message}`);
-            } finally {
-                isUpdating = false;
-            }
+                console.error('❌ Fetch error:', error); updateStatus(false);
+                if (error.message.includes('HTTP 413') || error.message.includes('request too large')) { showError('Data request too large. Try a shorter time range.'); }
+                else if (error.message.includes('HTTP 401') || error.message.includes('unauthorized')) { showError('Authentication failed. Please check the API Token.'); }
+                else { showError(`Connection error: ${error.message.substring(0, 100)}...`); }
+            } finally { isUpdating = false; }
         }
-        
-        // ========================================
-        // DATA PROCESSING - THE CRITICAL PART!
-        // ========================================
-        function processData(csv) {
-            console.log(`📊 PROCESSING DATA...`);
+
+        // --- DATA PROCESSING ---
+        function processData(csv, isAggregated) {
+            console.log(`📊 PROCESSING DATA... (Aggregated: ${isAggregated})`);
             const lines = csv.trim().split('\n');
-            
-            const timeSeries = {
-                voltage_filtered: [],
-                voltage_raw: [],
-                current_ma: [],
-                power_w: [],
-                soc_percent: [],
-                ambient_temp_c: [],
-                ambient_humidity_percent: []
-            };
-            
-            const latestValues = {};
-            let totalPoints = 0;
-            rawDataCache = [];
-            
-            // Parse CSV
+            const timeSeries = { voltage_filtered: [], voltage_raw: [], current_ma: [], power_w: [], soc_percent: [], ambient_temp_c: [], ambient_humidity_percent: [] };
+            const latestValues = {}; let totalPoints = 0; rawDataCache = [];
+
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].trim();
-                
-                if (!line || line.startsWith('#')) continue;
-                if (line.includes('_time') && line.includes('_value') && line.includes('_field')) continue;
-                
-                const parts = line.split(',');
-                if (parts.length < 8) continue;
-                
-                const timeStr = parts[5]?.trim();
-                const valueStr = parts[6]?.trim();
-                const field = parts[7]?.trim();
-                
+                if (!line || line.startsWith('#') || (line.includes('_time') && line.includes('_value') && line.includes('_field'))) continue;
+                const parts = line.split(','); if (parts.length < 8) continue;
+                const timeStr = parts[5]?.trim(), valueStr = parts[6]?.trim(), field = parts[7]?.trim();
                 if (!timeStr || !valueStr || !field) continue;
-                
-                const time = new Date(timeStr);
-                const value = parseFloat(valueStr);
-                
+                const time = new Date(timeStr), value = parseFloat(valueStr);
                 if (isNaN(time.getTime()) || isNaN(value)) continue;
-                
-                rawDataCache.push({
-                    timestamp: time.toISOString(),
-                    field: field,
-                    value: value
-                });
-                
-                if (timeSeries.hasOwnProperty(field)) {
-                    timeSeries[field].push({ x: time, y: value });
-                    totalPoints++;
-                }
-                
+
+                rawDataCache.push({ timestamp: time.toISOString(), field: field, value: value });
+                if (timeSeries.hasOwnProperty(field)) { timeSeries[field].push({ x: time, y: value }); totalPoints++; }
                 latestValues[field] = value;
             }
-            
-            console.log(`📦 Parsed ${totalPoints} data points`);
-            console.log(`📝 Latest values:`, latestValues);
-            
-            // DEBUG INFO
-            if (debugMode) {
-                const debugInfo = `
-📊 Update #${updateCounter + 1} at ${new Date().toLocaleTimeString()}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Parsed Points: ${totalPoints}
-Time Range: ${currentTimeRange}
-Cache Size: ${rawDataCache.length} entries
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Latest Values:
-${JSON.stringify(latestValues, null, 2)}
-                `.trim();
-                document.getElementById('debugInfo').textContent = debugInfo;
-            }
-            
-            // ========================================
-            // UPDATE ALL VALUES - ULTRA AGGRESSIVE!
-            // ========================================
-            console.log(`🎯 UPDATING ALL METRIC VALUES...`);
-            
-            // This script *already* forces the text values to update, 
-            // which fixes the "freeze" issue you mentioned.
-            forceUpdateValue('voltageFiltered', 'card-voltage-filtered', latestValues['voltage_filtered'], 3, ' V');
-            forceUpdateValue('voltageRaw', 'card-voltage-raw', latestValues['voltage_raw'], 3, ' V');
-            forceUpdateValue('current', 'card-current', latestValues['current_ma'], 0, ' mA');
-            forceUpdateValue('power', 'card-power', latestValues['power_w'], 2, ' W');
-            forceUpdateValue('soc', 'card-soc', latestValues['soc_percent'], 1, ' %');
-            forceUpdateValue('temp', 'card-temp', latestValues['ambient_temp_c'], 1, ' °C');
-            forceUpdateValue('humidity', 'card-humidity', latestValues['ambient_humidity_percent'], 0, ' %');
-            forceUpdateValue('badReadings', 'card-bad', latestValues['bad_readings_total'], 0, '');
-            
-            // Good readings calculation
-            const expectedReadings = Math.floor((Date.now() - new Date(rawDataCache[0]?.timestamp || Date.now())) / 1000);
-            const goodReadings = expectedReadings - (latestValues['bad_readings_total'] || 0);
-            forceUpdateValue('goodReadings', 'card-good', goodReadings > 0 ? goodReadings : 0, 0, '');
-            
-            // Status update
-            let status = 'IDLE';
-            let statusClass = 'status-idle';
-            if (latestValues['is_charging'] === 1) {
-                status = 'CHARGING';
-                statusClass = 'status-charging';
-            }
-            if (latestValues['is_discharging'] === 1) {
-                status = 'DISCHARGING';
-                statusClass = 'status-discharging';
-            }
-            
-            const statusEl = document.getElementById('status');
-            if (statusEl) {
-                statusEl.textContent = status;
-                statusEl.className = statusClass;
-                flashCard('card-status');
-            }
-            
-            // Update counter
-            updateCounter++;
-            document.getElementById('updateCount').textContent = updateCounter;
-            document.getElementById('updateCounter').style.animation = 'none';
-            setTimeout(() => {
-                document.getElementById('updateCounter').style.animation = 'counterBounce 0.5s ease-out';
-            }, 10);
-            
-            // Update data points
-            document.getElementById('dataPoints').textContent = `Points: ${totalPoints}`;
-            
-            // Update charts
-            charts.voltage.data.datasets[0].data = timeSeries.voltage_filtered;
-            charts.voltage.data.datasets[1].data = timeSeries.voltage_raw;
-            charts.voltage.update('none');
-            
-            charts.power.data.datasets[0].data = timeSeries.current_ma;
-            charts.power.data.datasets[1].data = timeSeries.power_w;
-            charts.power.update('none');
-            
-            charts.soc.data.datasets[0].data = timeSeries.soc_percent;
-            charts.soc.update('none');
-            
-            charts.env.data.datasets[0].data = timeSeries.ambient_temp_c;
-            charts.env.data.datasets[1].data = timeSeries.ambient_humidity_percent;
-            charts.env.update('none');
-            
-            console.log(`✅ UPDATE COMPLETE! Counter: ${updateCounter} | V=${latestValues['voltage_filtered']?.toFixed(3)}V | I=${latestValues['current_ma']?.toFixed(0)}mA`);
-        }
-        
-        // ========================================
-        // FORCE UPDATE VALUE - NUCLEAR OPTION!
-        // ========================================
-        function forceUpdateValue(elementId, cardId, value, decimals, unit) {
-            // This function ensures the text values update every time
-            const element = document.getElementById(elementId);
-            if (!element) {
-                console.warn(`  ⚠️  Element ${elementId} NOT FOUND!`);
-                return;
-            }
-            
-            const formattedValue = value !== undefined && value !== null 
-                ? (typeof value === 'number' ? value.toFixed(decimals) : value)
-                : '--';
-            
-            element.textContent = formattedValue;
-            // Add the unit back to the span in the HTML
-            const unitEl = element.nextElementSibling;
-            if (unitEl && unitEl.classList.contains('metric-unit')) {
-                 unitEl.textContent = unit;
-            } else {
-                 element.textContent = formattedValue + unit;
-            }
+            console.log(`📦 Parsed ${totalPoints} data points`); console.log(`📝 Latest values:`, latestValues);
 
+            // Update Metrics
+            forceUpdateValue(ui.voltageFiltered, 'card-voltage-filtered', latestValues['voltage_filtered'], 3, 'V');
+            forceUpdateValue(ui.voltageRaw, 'card-voltage-raw', latestValues['voltage_raw'], 3, 'V');
+            forceUpdateValue(ui.current, 'card-current', latestValues['current_ma'], 0, 'mA');
+            forceUpdateValue(ui.power, 'card-power', latestValues['power_w'], 2, 'W');
+            forceUpdateValue(ui.soc, 'card-soc', latestValues['soc_percent'], 1, '%');
+            forceUpdateValue(ui.temp, 'card-temp', latestValues['ambient_temp_c'], 1, '°C');
+            forceUpdateValue(ui.humidity, 'card-humidity', latestValues['ambient_humidity_percent'], 0, '%');
+            forceUpdateValue(ui.badReadings, 'card-bad', latestValues['bad_readings_total'], 0, '');
+
+            // Calculate good readings (use total points as proxy, subtract rounded bad_readings if available)
+            const badReadingsCount = latestValues['bad_readings_total'] !== undefined ? Math.round(latestValues['bad_readings_total']) : 0;
+            const goodReadingsCount = totalPoints > 0 ? Math.max(0, totalPoints - badReadingsCount) : 0; // Ensure non-negative
+            forceUpdateValue(ui.goodReadings, 'card-good', goodReadingsCount, 0, '');
+
+            // Update Status (handle averaged values by rounding)
+            let status = 'IDLE', statusClass = 'status-idle';
+            if (latestValues['is_charging'] !== undefined && Math.round(latestValues['is_charging']) === 1) { status = 'CHARGING'; statusClass = 'status-charging'; }
+            else if (latestValues['is_discharging'] !== undefined && Math.round(latestValues['is_discharging']) === 1) { status = 'DISCHARGING'; statusClass = 'status-discharging'; }
+            if (ui.status) { ui.status.textContent = status; ui.status.className = statusClass; flashCard('card-status'); }
+
+            // Update Counter & Points
+            updateCounter++; ui.updateCountSpan.textContent = updateCounter;
+            ui.dataPoints.textContent = totalPoints;
+
+            // Update Charts
+            if(charts.voltage) { charts.voltage.data.datasets[0].data = timeSeries.voltage_filtered; charts.voltage.data.datasets[1].data = timeSeries.voltage_raw; charts.voltage.update('none'); }
+            if(charts.power) { charts.power.data.datasets[0].data = timeSeries.current_ma; charts.power.data.datasets[1].data = timeSeries.power_w; charts.power.update('none'); }
+            if(charts.soc) { charts.soc.data.datasets[0].data = timeSeries.soc_percent; charts.soc.update('none'); }
+            if(charts.env) { charts.env.data.datasets[0].data = timeSeries.ambient_temp_c; charts.env.data.datasets[1].data = timeSeries.ambient_humidity_percent; charts.env.update('none'); }
+
+            console.log(`✅ UPDATE COMPLETE! Counter: ${updateCounter}`);
+        }
+
+        // --- FORCE UPDATE VALUE & FLASH ---
+        function forceUpdateValue(element, cardId, value, decimals, unit) {
+            if (!element) { console.warn(`Element for card ${cardId} NOT FOUND!`); return; }
+            const formattedValue = (value !== undefined && value !== null && !isNaN(value))
+                ? Number(value).toFixed(decimals)
+                : '--'; // Handle potential NaN from aggregation
+            element.textContent = formattedValue;
+            const unitEl = element.nextElementSibling; // Get sibling span for unit
+            if (unitEl && unitEl.classList.contains('metric-unit')) { unitEl.textContent = unit; }
+            else { console.warn(`Unit element not found for ${element.id}`); element.textContent = formattedValue + (unit || ''); } // Fallback if structure changes
             flashCard(cardId);
         }
-        
-        // Flash animation for card
-        function flashCard(cardId) {
-            const card = document.getElementById(cardId);
-            if (card) {
-                card.classList.remove('flash');
-                void card.offsetWidth;
-                card.classList.add('flash');
-                
-                setTimeout(() => {
-                    card.classList.remove('flash');
-                }, 600);
-            }
-        }
-        
-        // ========================================
-        // EXPORT FUNCTIONS - NO LONGER USED
-        // ========================================
-        function exportCSV() {
-            console.log("Export CSV button removed.");
-        }
-        
-        function exportJSON() {
-            console.log("Export JSON button removed.");
-        }
-        
-        // ========================================
-        // STATUS & MESSAGES
-        // ========================================
+        function flashCard(cardId) { const card = document.getElementById(cardId); if (card) { card.classList.remove('flash'); void card.offsetWidth; card.classList.add('flash'); setTimeout(() => { card.classList.remove('flash'); }, 550); } }
+
+        // --- STATUS & MESSAGES ---
         function updateStatus(connected) {
-            const badge = document.getElementById('statusBadge');
-            const text = document.getElementById('statusText');
-            const dot = document.getElementById('liveDot');
-            const lastUpdate = document.getElementById('lastUpdate');
-            
+            if (!ui.statusBadge || !ui.statusText || !ui.liveDot || !ui.lastUpdate) return; // Check if UI elements exist
             if (connected) {
-                badge.className = 'status-badge status-connected';
-                text.textContent = '🟢 Connected';
-                dot.style.display = 'inline-block';
-                lastUpdate.textContent = '🕐 Last: ' + new Date().toLocaleTimeString();
+                ui.statusBadge.className = 'status-badge status-connected'; ui.statusText.textContent = 'Connected';
+                ui.liveDot.style.display = 'inline-block'; ui.lastUpdate.textContent = new Date().toLocaleTimeString();
             } else {
-                badge.className = 'status-badge status-disconnected';
-                text.textContent = '🔴 Disconnected';
-                dot.style.display = 'none';
-                lastUpdate.textContent = '⚠️ Connection lost';
+                ui.statusBadge.className = 'status-badge status-disconnected'; ui.statusText.textContent = 'Disconnected';
+                ui.liveDot.style.display = 'none'; ui.lastUpdate.textContent = 'Connection lost';
             }
         }
-        
-        function showError(message) {
-            document.getElementById('errorContainer').innerHTML = 
-                `<div class="error-message">❌ ${message}</div>`;
-            setTimeout(clearError, 5000);
-        }
-        
-        function clearError() {
-            document.getElementById('errorContainer').innerHTML = '';
-        }
-        
-        function showSuccess(message) {
-            document.getElementById('successContainer').innerHTML = 
-                `<div class="success-message">✅ ${message}</div>`;
-            setTimeout(clearSuccess, 3000);
-        }
-        
-        function clearSuccess() {
-            document.getElementById('successContainer').innerHTML = '';
-        }
-        
-        // Cleanup
-        window.addEventListener('beforeunload', () => {
-            if (updateInterval) {
-                clearInterval(updateInterval);
-            }
-        });
+        let errorTimeout, successTimeout; // To prevent message overlap
+        function showError(message) { clearTimeout(successTimeout); clearError(); ui.errorContainer.innerHTML = `<div class="error-message">${message}</div>`; errorTimeout = setTimeout(clearError, 6000); }
+        function clearError() { clearTimeout(errorTimeout); if(ui.errorContainer) ui.errorContainer.innerHTML = ''; }
+        function showSuccess(message) { clearTimeout(errorTimeout); clearSuccess(); ui.successContainer.innerHTML = `<div class="success-message">${message}</div>`; successTimeout = setTimeout(clearSuccess, 3500); }
+        function clearSuccess() { clearTimeout(successTimeout); if(ui.successContainer) ui.successContainer.innerHTML = ''; }
+
+        // --- Cleanup ---
+        window.addEventListener('beforeunload', () => { if (updateInterval) clearInterval(updateInterval); });
     </script>
 </body>
 </html>
