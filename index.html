@@ -58,11 +58,6 @@
         .toolbar .btn-primary { background-color: #20398c; color: #fff; border-color: #20398c; }
         .toolbar .btn-primary:hover { background-color: #1a2f70; }
 
-        /* --- Debug Panel --- */
-        .debug-panel { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 15px; margin-bottom: 20px; font-family: 'Courier New', monospace; font-size: 0.75em; max-height: 200px; overflow-y: auto; }
-        .debug-panel h3 { font-size: 1em; margin-bottom: 10px; color: #495057; }
-        .debug-panel pre { margin: 0; white-space: pre-wrap; word-wrap: break-word; }
-
         /* --- Metric Cards --- */
         .metrics { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 20px; }
         .metric-card { background: #ffffff; padding: 10px; border-radius: 6px; text-align: center; border: 1px solid #e9ecef; box-shadow: 0 1px 2px rgba(0,0,0,0.03); transition: all 0.25s ease; }
@@ -107,7 +102,7 @@
         <div class="header">
             <h1>🔋 NMC90 Battery Field Test Monitor</h1>
             <p class="subtitle">Real-time Battery & Environmental Monitoring</p>
-            <span class="version-badge">DIAGNOSTIC MODE</span><br>
+            <span class="version-badge">LIVE DATA</span><br>
             <a href="https://cest.vistec.ac.th" class="company-link" target="_blank">🔬 CEST VISTEC - Battery Technology Solutions</a>
         </div>
 
@@ -123,12 +118,6 @@
             <div class="status-badge">
                 <span>Frames: <strong id="data-points">0</strong></span>
             </div>
-        </div>
-
-        <!-- Debug Panel -->
-        <div class="debug-panel">
-            <h3>🔍 Data Structure Diagnostic (Check Console F12 for full details)</h3>
-            <pre id="debug-output">Waiting for data...</pre>
         </div>
 
         <!-- Error/Success Messages -->
@@ -149,7 +138,15 @@
                     <option value="12h">Last 12 Hours</option>
                     <option value="24h">Last 24 Hours</option>
                     <option value="7d">Last 7 Days</option>
+                    <option value="custom">Custom Range</option>
                 </select>
+            </div>
+
+            <div class="toolbar-group" id="custom-range-group" style="display: none;">
+                <label for="start-time">From:</label>
+                <input type="datetime-local" id="start-time">
+                <label for="end-time">To:</label>
+                <input type="datetime-local" id="end-time">
             </div>
 
             <div class="toolbar-group">
@@ -202,30 +199,30 @@
             </div>
             
             <div class="metric-card" id="card-temp">
-                <div class="metric-label">Ambient Temp</div>
+                <div class="metric-label">Prototype Temp</div>
                 <div class="metric-value">
                     <span id="temp">--</span>
                     <span class="metric-unit">°C</span>
                 </div>
             </div>
             <div class="metric-card" id="card-humidity">
-                <div class="metric-label">Ambient Humidity</div>
+                <div class="metric-label">Prototype Humidity</div>
                 <div class="metric-value">
                     <span id="humidity">--</span>
                     <span class="metric-unit">%</span>
                 </div>
             </div>
-            <div class="metric-card" id="card-proto-temp">
-                <div class="metric-label">Prototype Temp</div>
+            <div class="metric-card" id="card-solar-temp">
+                <div class="metric-label">Solar Temp</div>
                 <div class="metric-value">
-                    <span id="proto-temp">--</span>
+                    <span id="solar-temp">--</span>
                     <span class="metric-unit">°C</span>
                 </div>
             </div>
-            <div class="metric-card" id="card-proto-humidity">
-                <div class="metric-label">Prototype Humidity</div>
+            <div class="metric-card" id="card-solar-humidity">
+                <div class="metric-label">Solar Humidity</div>
                 <div class="metric-value">
-                    <span id="proto-humidity">--</span>
+                    <span id="solar-humidity">--</span>
                     <span class="metric-unit">%</span>
                 </div>
             </div>
@@ -245,7 +242,7 @@
             </div>
         </div>
 
-        <!-- Charts -->
+        <!-- Charts - SWAPPED DATA SOURCES -->
         <div class="charts">
             <div class="chart-container">
                 <div class="chart-title">🔋 Battery Voltage & State of Charge</div>
@@ -260,13 +257,13 @@
                 </div>
             </div>
             <div class="chart-container">
-                <div class="chart-title">🌡️ Prototype Temperature & Humidity</div>
+                <div class="chart-title">🌡️ Prototype Temperature & Humidity (NMC90)</div>
                 <div class="chart-canvas">
                     <canvas id="proto-chart"></canvas>
                 </div>
             </div>
             <div class="chart-container">
-                <div class="chart-title">☀️ Solar Light & Ambient Conditions</div>
+                <div class="chart-title">☀️ Solar Light & Environmental Conditions</div>
                 <div class="chart-canvas">
                     <canvas id="solar-chart"></canvas>
                 </div>
@@ -275,7 +272,7 @@
 
         <!-- Footer -->
         <div class="footer">
-            <p>Powered by CEST VISTEC Battery Technology Solutions | Diagnostic Mode v3.0</p>
+            <p>Powered by CEST VISTEC Battery Technology Solutions | Dual-Query Architecture v2.5</p>
             <p><a href="https://github.com/influxdata/influxdb" target="_blank" style="color: #6c757d;">Built with InfluxDB</a> & <a href="https://www.chartjs.org/" target="_blank" style="color: #6c757d;">Chart.js</a></p>
         </div>
     </div>
@@ -283,6 +280,9 @@
     <script>
         'use strict';
 
+        // =============================================================================
+        // CONFIGURATION
+        // =============================================================================
         const config = {
             url: 'https://us-east-1-1.aws.cloud2.influxdata.com',
             token: 'fRjbZpkh28B7HIaqHyR4A62Jr2bGwiC8Hcc-LwaCUxtKojBMH39CscUEuqp9PTDuqab_3yEfFGtCtsdCYD52Fw==',
@@ -290,18 +290,27 @@
             bucket: 'solar_bucket'
         };
 
+        // =============================================================================
+        // GLOBAL STATE
+        // =============================================================================
         let isUpdating = false;
         let updateInterval = null;
         let currentTimeRange = '1h';
+        let aggregateInterval = null;
 
-        const charts = { battery: null, power: null, proto: null, solar: null };
+        const charts = {
+            battery: null,
+            power: null,
+            proto: null,
+            solar: null
+        };
+
         const ui = {
             statusBadge: document.getElementById('status-badge'),
             statusText: document.getElementById('status-text'),
             liveDot: document.getElementById('live-dot'),
             lastUpdate: document.getElementById('last-update'),
             dataPoints: document.getElementById('data-points'),
-            debugOutput: document.getElementById('debug-output'),
             voltageFiltered: document.getElementById('voltage-filtered'),
             lightLux: document.getElementById('light-lux'),
             current: document.getElementById('current'),
@@ -310,8 +319,8 @@
             status: document.getElementById('status'),
             temp: document.getElementById('temp'),
             humidity: document.getElementById('humidity'),
-            protoTemp: document.getElementById('proto-temp'),
-            protoHumidity: document.getElementById('proto-humidity'),
+            solarTemp: document.getElementById('solar-temp'),
+            solarHumidity: document.getElementById('solar-humidity'),
             goodReadings: document.getElementById('good-readings'),
             badReadings: document.getElementById('bad-readings'),
             batteryChartCanvas: document.getElementById('battery-chart'),
@@ -319,117 +328,68 @@
             protoChartCanvas: document.getElementById('proto-chart'),
             solarChartCanvas: document.getElementById('solar-chart'),
             timeRangeSelect: document.getElementById('time-range-select'),
+            customRangeGroup: document.getElementById('custom-range-group'),
+            startTimeInput: document.getElementById('start-time'),
+            endTimeInput: document.getElementById('end-time'),
             refreshBtn: document.getElementById('refresh-btn'),
             errorContainer: document.getElementById('error-container'),
             successContainer: document.getElementById('success-container')
         };
 
+        // =============================================================================
+        // INITIALIZATION
+        // =============================================================================
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 Initializing DIAGNOSTIC MODE...');
+            console.log('🚀 Initializing NMC90 Battery Monitor Dashboard...');
             initializeCharts();
             setupEventListeners();
             fetchData();
             updateInterval = setInterval(fetchData, 5000);
+            console.log('✅ Dashboard initialized successfully');
         });
 
+        // =============================================================================
+        // EVENT LISTENERS
+        // =============================================================================
         function setupEventListeners() {
             ui.timeRangeSelect?.addEventListener('change', (e) => {
                 currentTimeRange = e.target.value;
-                fetchData();
+                if (currentTimeRange === 'custom') {
+                    ui.customRangeGroup.style.display = 'flex';
+                } else {
+                    ui.customRangeGroup.style.display = 'none';
+                    fetchData();
+                }
             });
+
+            ui.startTimeInput?.addEventListener('change', () => {
+                if (currentTimeRange === 'custom') fetchData();
+            });
+
+            ui.endTimeInput?.addEventListener('change', () => {
+                if (currentTimeRange === 'custom') fetchData();
+            });
+
             ui.refreshBtn?.addEventListener('click', () => {
                 fetchData();
-                showSuccess('Data refreshed!');
+                showSuccess('Data refreshed successfully!');
             });
         }
 
-        function initializeCharts() {
-            const chartOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: false,
-                interaction: { mode: 'index', intersect: false },
-                scales: {
-                    x: {
-                        type: 'time',
-                        time: { displayFormats: { minute: 'HH:mm', hour: 'HH:mm' } },
-                        ticks: { color: '#6c757d', font: { size: 9 }, maxTicksLimit: 8 },
-                        grid: { display: false },
-                        border: { display: false }
-                    },
-                    y: {
-                        ticks: { color: '#6c757d', font: { size: 9 }, maxTicksLimit: 6 },
-                        grid: { display: false },
-                        border: { display: false },
-                        grace: '5%'
-                    },
-                    y1: {
-                        position: 'right',
-                        ticks: { color: '#6c757d', font: { size: 9 }, maxTicksLimit: 6 },
-                        grid: { display: false },
-                        border: { display: false },
-                        grace: '5%'
-                    }
-                },
-                plugins: {
-                    legend: { labels: { color: '#343a40', font: { size: 10, weight: 600 }, boxWidth: 12, padding: 10 } },
-                    tooltip: { backgroundColor: 'rgba(0, 0, 0, 0.75)', titleColor: '#fff', bodyColor: '#fff' }
-                }
-            };
-
-            const lineOpts = { fill: false, tension: 0, borderWidth: 0, pointRadius: 2, pointHoverRadius: 4, spanGaps: false, showLine: false };
-
-            Object.values(charts).forEach(chart => chart?.destroy());
-
-            charts.battery = new Chart(ui.batteryChartCanvas, {
-                type: 'line',
-                data: {
-                    datasets: [
-                        { label: 'Battery Voltage (V)', data: [], borderColor: '#198754', backgroundColor: '#198754', yAxisID: 'y', ...lineOpts },
-                        { label: 'State of Charge (%)', data: [], borderColor: '#6f42c1', backgroundColor: '#6f42c1', yAxisID: 'y1', ...lineOpts }
-                    ]
-                },
-                options: { ...chartOptions, scales: { x: chartOptions.scales.x, y: { ...chartOptions.scales.y, position: 'left' }, y1: { ...chartOptions.scales.y1, min: 0, max: 100 } } }
-            });
-
-            charts.power = new Chart(ui.powerChartCanvas, {
-                type: 'line',
-                data: {
-                    datasets: [
-                        { label: 'Current (mA)', data: [], borderColor: '#28a745', backgroundColor: '#28a745', yAxisID: 'y', ...lineOpts },
-                        { label: 'Power (W)', data: [], borderColor: '#dc3545', backgroundColor: '#dc3545', yAxisID: 'y1', ...lineOpts }
-                    ]
-                },
-                options: chartOptions
-            });
-
-            charts.proto = new Chart(ui.protoChartCanvas, {
-                type: 'line',
-                data: {
-                    datasets: [
-                        { label: 'Prototype Temp (°C)', data: [], borderColor: '#ff6b35', backgroundColor: '#ff6b35', yAxisID: 'y', ...lineOpts },
-                        { label: 'Prototype Humidity (%)', data: [], borderColor: '#4ecdc4', backgroundColor: '#4ecdc4', yAxisID: 'y1', ...lineOpts }
-                    ]
-                },
-                options: chartOptions
-            });
-
-            charts.solar = new Chart(ui.solarChartCanvas, {
-                type: 'line',
-                data: {
-                    datasets: [
-                        { label: 'Solar Light (lux)', data: [], borderColor: '#ffc107', backgroundColor: '#ffc107', yAxisID: 'y', ...lineOpts },
-                        { label: 'Ambient Temp (°C)', data: [], borderColor: '#fd7e14', backgroundColor: '#fd7e14', yAxisID: 'y1', ...lineOpts },
-                        { label: 'Ambient Humidity (%)', data: [], borderColor: '#0dcaf0', backgroundColor: '#0dcaf0', yAxisID: 'y1', ...lineOpts }
-                    ]
-                },
-                options: chartOptions
-            });
-
-            console.log('✅ Charts initialized');
-        }
-
+        // =============================================================================
+        // TIME RANGE QUERY BUILDER
+        // =============================================================================
         function getTimeRangeQuery() {
+            if (currentTimeRange === 'custom') {
+                const start = ui.startTimeInput?.value;
+                const end = ui.endTimeInput?.value;
+                if (!start || !end) {
+                    showError('Please select both start and end times for custom range.');
+                    return null;
+                }
+                return `range(start: ${new Date(start).toISOString()}, stop: ${new Date(end).toISOString()})`;
+            }
+
             const ranges = {
                 '5m': 'range(start: -5m)',
                 '15m': 'range(start: -15m)',
@@ -441,116 +401,441 @@
                 '24h': 'range(start: -24h)',
                 '7d': 'range(start: -7d)'
             };
+
             return ranges[currentTimeRange] || ranges['1h'];
         }
 
+        // =============================================================================
+        // CHART INITIALIZATION
+        // =============================================================================
+        function initializeCharts() {
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            displayFormats: {
+                                millisecond: 'HH:mm:ss',
+                                second: 'HH:mm:ss',
+                                minute: 'HH:mm',
+                                hour: 'HH:mm'
+                            }
+                        },
+                        ticks: { 
+                            color: '#6c757d', 
+                            font: { size: 9 }, 
+                            maxTicksLimit: 8,
+                            maxRotation: 0
+                        },
+                        grid: { 
+                            display: false
+                        },
+                        border: { display: false }
+                    },
+                    y: {
+                        ticks: { 
+                            color: '#6c757d', 
+                            font: { size: 9 }, 
+                            maxTicksLimit: 6 
+                        },
+                        grid: { display: false },
+                        border: { display: false },
+                        grace: '5%'
+                    },
+                    y1: {
+                        position: 'right',
+                        ticks: { 
+                            color: '#6c757d', 
+                            font: { size: 9 }, 
+                            maxTicksLimit: 6 
+                        },
+                        grid: { display: false },
+                        border: { display: false },
+                        grace: '5%'
+                    }
+                },
+                plugins: {
+                    legend: { 
+                        labels: { 
+                            color: '#343a40', 
+                            font: { size: 10, weight: 600 }, 
+                            boxWidth: 12, 
+                            padding: 10 
+                        } 
+                    },
+                    tooltip: { 
+                        backgroundColor: 'rgba(0, 0, 0, 0.75)', 
+                        titleColor: '#fff', 
+                        bodyColor: '#fff', 
+                        borderColor: 'rgba(0, 0, 0, 0.1)', 
+                        borderWidth: 1, 
+                        padding: 6, 
+                        boxPadding: 3, 
+                        titleFont: { size: 11 }, 
+                        bodyFont: { size: 10 } 
+                    }
+                }
+            };
+
+            const defaultLineOptions = { 
+                fill: false, 
+                tension: 0, 
+                borderWidth: 0,
+                pointRadius: 2,
+                pointHoverRadius: 4, 
+                pointHitRadius: 6,
+                spanGaps: false,
+                showLine: false
+            };
+
+            Object.values(charts).forEach(chart => chart?.destroy());
+
+            // Battery Voltage & SoC Chart
+            charts.battery = new Chart(ui.batteryChartCanvas, {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Battery Voltage (V)',
+                            data: [],
+                            borderColor: '#198754',
+                            backgroundColor: '#198754',
+                            yAxisID: 'y',
+                            ...defaultLineOptions
+                        },
+                        {
+                            label: 'State of Charge (%)',
+                            data: [],
+                            borderColor: '#6f42c1',
+                            backgroundColor: '#6f42c1',
+                            yAxisID: 'y1',
+                            ...defaultLineOptions
+                        }
+                    ]
+                },
+                options: {
+                    ...chartOptions,
+                    scales: {
+                        x: chartOptions.scales.x,
+                        y: { 
+                            ...chartOptions.scales.y, 
+                            position: 'left',
+                            title: { display: true, text: 'Voltage (V)', color: '#6c757d', font: { size: 10 } }
+                        },
+                        y1: { 
+                            ...chartOptions.scales.y1, 
+                            position: 'right',
+                            min: 0,
+                            max: 100,
+                            title: { display: true, text: 'SoC (%)', color: '#6c757d', font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+
+            // Current & Power Chart
+            charts.power = new Chart(ui.powerChartCanvas, {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Current (mA)',
+                            data: [],
+                            borderColor: '#28a745',
+                            backgroundColor: '#28a745',
+                            yAxisID: 'y',
+                            ...defaultLineOptions
+                        },
+                        {
+                            label: 'Power (W)',
+                            data: [],
+                            borderColor: '#dc3545',
+                            backgroundColor: '#dc3545',
+                            yAxisID: 'y1',
+                            ...defaultLineOptions
+                        }
+                    ]
+                },
+                options: {
+                    ...chartOptions,
+                    scales: {
+                        ...chartOptions.scales,
+                        y: { ...chartOptions.scales.y, position: 'left' },
+                        y1: { ...chartOptions.scales.y1, position: 'right' }
+                    }
+                }
+            });
+
+            // Prototype Temp & Humidity Chart (FROM NMC90 DATA)
+            charts.proto = new Chart(ui.protoChartCanvas, {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Prototype Temp (°C)',
+                            data: [],
+                            borderColor: '#ff6b35',
+                            backgroundColor: '#ff6b35',
+                            yAxisID: 'y',
+                            ...defaultLineOptions
+                        },
+                        {
+                            label: 'Prototype Humidity (%)',
+                            data: [],
+                            borderColor: '#4ecdc4',
+                            backgroundColor: '#4ecdc4',
+                            yAxisID: 'y1',
+                            ...defaultLineOptions
+                        }
+                    ]
+                },
+                options: {
+                    ...chartOptions,
+                    scales: {
+                        ...chartOptions.scales,
+                        y: { 
+                            ...chartOptions.scales.y, 
+                            position: 'left',
+                            title: { display: true, text: 'Temperature (°C)', color: '#6c757d', font: { size: 10 } }
+                        },
+                        y1: { 
+                            ...chartOptions.scales.y1, 
+                            position: 'right',
+                            title: { display: true, text: 'Humidity (%)', color: '#6c757d', font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+
+            // Solar Light & Environmental Conditions Chart (FROM ENVIRONMENT_DATA)
+            charts.solar = new Chart(ui.solarChartCanvas, {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Solar Light (lux)',
+                            data: [],
+                            borderColor: '#ffc107',
+                            backgroundColor: '#ffc107',
+                            yAxisID: 'y',
+                            ...defaultLineOptions
+                        },
+                        {
+                            label: 'Solar Temp (°C)',
+                            data: [],
+                            borderColor: '#fd7e14',
+                            backgroundColor: '#fd7e14',
+                            yAxisID: 'y1',
+                            ...defaultLineOptions
+                        },
+                        {
+                            label: 'Solar Humidity (%)',
+                            data: [],
+                            borderColor: '#0dcaf0',
+                            backgroundColor: '#0dcaf0',
+                            yAxisID: 'y1',
+                            ...defaultLineOptions
+                        }
+                    ]
+                },
+                options: {
+                    ...chartOptions,
+                    scales: {
+                        x: chartOptions.scales.x,
+                        y: { 
+                            ...chartOptions.scales.y,
+                            position: 'left',
+                            title: { display: true, text: 'Light (lux)', color: '#6c757d', font: { size: 10 } }
+                        },
+                        y1: {
+                            position: 'right',
+                            ticks: { 
+                                color: '#6c757d', 
+                                font: { size: 9 }, 
+                                maxTicksLimit: 6 
+                            },
+                            grid: { display: false },
+                            border: { display: false },
+                            grace: '5%',
+                            title: { display: true, text: 'Temp/Humidity', color: '#6c757d', font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+
+            console.log('✅ Charts initialized');
+        }
+
+        // =============================================================================
+        // DUAL-QUERY DATA FETCHING
+        // =============================================================================
         async function fetchData() {
             if (isUpdating) return;
             isUpdating = true;
-            console.log(`\n🔍 ===== DIAGNOSTIC FETCH [${new Date().toLocaleTimeString()}] =====`);
+            console.log(`\n🔄 [${new Date().toLocaleTimeString()}] DUAL-QUERY FETCH INITIATED...`);
             
             let fetchSuccessful = false;
 
             try {
                 const timeRange = getTimeRangeQuery();
+                if (!timeRange) {
+                    isUpdating = false;
+                    return;
+                }
 
-                // Simple query - just get ALL the data
-                const query = `
+                let currentInterval = '5s';
+                if (['15m', '30m'].includes(currentTimeRange)) {
+                    currentInterval = '15s';
+                } else if (['1h', '3h'].includes(currentTimeRange)) {
+                    currentInterval = '1m';
+                } else if (['6h', '12h', '24h'].includes(currentTimeRange)) {
+                    currentInterval = '5m';
+                } else if (['7d'].includes(currentTimeRange) || currentTimeRange === 'custom') {
+                    currentInterval = '15m';
+                }
+
+                aggregateInterval = currentInterval;
+                const requiresAggregation = !!aggregateInterval;
+
+                const baseQuery = `
                     from(bucket: "${config.bucket}")
                       |> ${timeRange}
                       |> filter(fn: (r) => 
                             r["_measurement"] == "nmc90_power_data" or
                             r["_measurement"] == "environment_data"
                          )
-                      |> aggregateWindow(every: 1m, fn: mean, createEmpty: false)
+                      |> filter(fn: (r) =>
+                            r["_field"] == "battery_voltage" or
+                            r["_field"] == "load_current" or
+                            r["_field"] == "load_power" or
+                            r["_field"] == "state_of_charge" or
+                            r["_field"] == "ambient_temp" or
+                            r["_field"] == "ambient_humidity" or
+                            r["_field"] == "bad_readings_total" or
+                            r["_field"] == "is_charging" or
+                            r["_field"] == "is_discharging" or
+                            r["_field"] == "light_lux"
+                         )
                       |> sort(columns: ["_time"])
                 `;
 
-                console.log('📤 Sending query to InfluxDB...');
-
-                const response = await fetch(`${config.url}/api/v2/query?org=${encodeURIComponent(config.org)}`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Token ${config.token}`,
-                        'Content-Type': 'application/vnd.flux',
-                        'Accept': 'application/csv'
-                    },
-                    body: query
-                });
-
-                if (!response.ok) {
-                    const errorBody = await response.text();
-                    console.error('❌ Query error:', errorBody);
-                    throw new Error(`HTTP ${response.status}: ${errorBody}`);
+                let chartQuery = baseQuery;
+                if (requiresAggregation) {
+                    chartQuery += `|> aggregateWindow(every: ${aggregateInterval}, fn: mean, createEmpty: false)`;
+                } else {
+                    chartQuery += `|> aggregateWindow(every: 2s, fn: mean, createEmpty: false)`;
                 }
 
-                const csv = await response.text();
-                console.log('📥 Response received, length:', csv.length);
-                
-                // Log first 10 lines to console
-                const firstLines = csv.split('\n').slice(0, 10).join('\n');
-                console.log('📋 First 10 lines of CSV:\n' + firstLines);
+                let cardQuery = baseQuery;
+                if (requiresAggregation) {
+                    cardQuery += `|> aggregateWindow(every: ${aggregateInterval}, fn: last, createEmpty: false)`;
+                } else {
+                    cardQuery += `|> aggregateWindow(every: 2s, fn: last, createEmpty: false)`;
+                }
 
-                processData(csv);
+                const [chartResponse, cardResponse] = await Promise.all([
+                    fetch(`${config.url}/api/v2/query?org=${encodeURIComponent(config.org)}`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Token ${config.token}`,
+                            'Content-Type': 'application/vnd.flux',
+                            'Accept': 'application/csv'
+                        },
+                        body: chartQuery
+                    }),
+                    fetch(`${config.url}/api/v2/query?org=${encodeURIComponent(config.org)}`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Token ${config.token}`,
+                            'Content-Type': 'application/vnd.flux',
+                            'Accept': 'application/csv'
+                        },
+                        body: cardQuery
+                    })
+                ]);
+
+                if (!chartResponse.ok) {
+                    const errorBody = await chartResponse.text();
+                    console.error('❌ Chart query error:', errorBody);
+                    throw new Error(`Chart Query HTTP ${chartResponse.status}: ${errorBody}`);
+                }
+
+                if (!cardResponse.ok) {
+                    const errorBody = await cardResponse.text();
+                    console.error('❌ Card query error:', errorBody);
+                    throw new Error(`Card Query HTTP ${cardResponse.status}: ${errorBody}`);
+                }
+
+                const chartCSV = await chartResponse.text();
+                const cardCSV = await cardResponse.text();
+
+                console.log('✅ Both queries completed successfully');
+
+                processDualQueryData(chartCSV, cardCSV);
 
                 fetchSuccessful = true;
                 clearError();
 
             } catch (error) {
                 console.error('❌ Fetch error:', error);
-                showError(`Connection error: ${error.message}`);
+                
+                if (error.message.includes('HTTP 413') || error.message.includes('request too large')) {
+                    showError('Data request too large. Try a shorter time range.');
+                } else if (error.message.includes('HTTP 401') || error.message.includes('unauthorized')) {
+                    showError('Authentication failed. Please check the API Token.');
+                } else if (error.message.includes('HTTP 503') || error.message.includes('unavailable') || error.message.includes('timeout')) {
+                    showError('Connection timeout. Server might be unavailable or network issue.');
+                } else if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+                    showError('Network error. Please check your connection.');
+                } else {
+                    showError(`Connection error: ${error.message.substring(0, 100)}...`);
+                }
             } finally {
                 updateStatus(fetchSuccessful);
                 isUpdating = false;
             }
         }
 
-        function processData(csv) {
-            console.log('🔄 Processing data...');
-            
-            const lines = csv.trim().split('\n');
-            console.log(`📊 Total lines in CSV: ${lines.length}`);
+        // =============================================================================
+        // DUAL-QUERY DATA PROCESSING - SWAPPED SOURCES
+        // =============================================================================
+        function processDualQueryData(chartCSV, cardCSV) {
+            console.log(`📊 PROCESSING DUAL-QUERY DATA...`);
 
-            // Find all unique fields and measurements
-            const fieldsMeasurements = new Set();
-            const latestValues = {};
-            
-            const timeSeries = {
+            // Parse chart data
+            const chartLines = chartCSV.trim().split('\n');
+            const chartTimeSeries = {
                 battery_voltage: [],
                 light_lux: [],
                 load_current: [],
                 load_power: [],
                 state_of_charge: [],
-                ambient_temp: [],
-                ambient_humidity: [],
-                proto_temp: [],
-                proto_humidity: []
+                proto_temp: [],           // FROM nmc90_power_data (NMC90 ambient sensors)
+                proto_humidity: [],       // FROM nmc90_power_data (NMC90 ambient sensors)
+                solar_temp: [],           // FROM environment_data (solar panel sensors)
+                solar_humidity: []        // FROM environment_data (solar panel sensors)
             };
 
-            let dataCount = 0;
+            let chartDataPoints = 0;
 
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i].trim();
-                
-                // Skip empty lines, comments, and header lines
-                if (!line || line.startsWith('#') || line.startsWith(',result') || line.includes('_start,_stop')) {
-                    continue;
-                }
+            for (let i = 0; i < chartLines.length; i++) {
+                const line = chartLines[i].trim();
+                if (!line || line.startsWith('#') || line.startsWith(',')) continue;
 
                 const parts = line.split(',');
                 if (parts.length < 9) continue;
 
-                // Try to find _measurement, _field, _time, _value
-                // The CSV format can vary, so let's be flexible
-                let measurement, field, timeStr, valueStr;
-
-                // Common format: ,result,table,_start,_stop,_time,_value,_field,_measurement
-                if (parts.length >= 9) {
-                    timeStr = parts[5]?.trim();
-                    valueStr = parts[6]?.trim();
-                    field = parts[7]?.trim();
-                    measurement = parts[8]?.trim();
-                }
+                const measurement = parts[8]?.trim();
+                const field = parts[7]?.trim();
+                const timeStr = parts[5]?.trim();
+                const valueStr = parts[6]?.trim();
 
                 if (!timeStr || !valueStr || !field || !measurement) continue;
 
@@ -559,44 +844,70 @@
 
                 if (isNaN(time.getTime()) || isNaN(value)) continue;
 
-                // Track what we're finding
-                fieldsMeasurements.add(`${measurement} → ${field}`);
-
-                // Store latest value
-                const key = `${field}_${measurement}`;
-                latestValues[key] = value;
-                latestValues[field] = value; // Also store without measurement suffix
-
-                // Store time series
-                if (timeSeries.hasOwnProperty(field)) {
-                    timeSeries[field].push({ x: time, y: value });
-                } else if (field === 'ambient_temp' && measurement === 'environment_data') {
-                    timeSeries.proto_temp.push({ x: time, y: value });
-                } else if (field === 'ambient_humidity' && measurement === 'environment_data') {
-                    timeSeries.proto_humidity.push({ x: time, y: value });
+                // Route data - SWAPPED: NMC90 data goes to "proto", environment_data goes to "solar"
+                if (field === "ambient_temp") {
+                    if (measurement === "nmc90_power_data") {
+                        chartTimeSeries.proto_temp.push({ x: time, y: value });
+                        chartDataPoints++;
+                    } else if (measurement === "environment_data") {
+                        chartTimeSeries.solar_temp.push({ x: time, y: value });
+                        chartDataPoints++;
+                    }
+                } else if (field === "ambient_humidity") {
+                    if (measurement === "nmc90_power_data") {
+                        chartTimeSeries.proto_humidity.push({ x: time, y: value });
+                        chartDataPoints++;
+                    } else if (measurement === "environment_data") {
+                        chartTimeSeries.solar_humidity.push({ x: time, y: value });
+                        chartDataPoints++;
+                    }
+                } else if (chartTimeSeries.hasOwnProperty(field)) {
+                    chartTimeSeries[field].push({ x: time, y: value });
+                    chartDataPoints++;
                 }
-
-                dataCount++;
             }
 
-            console.log(`✅ Parsed ${dataCount} data points`);
-            console.log('📊 Fields and Measurements found:');
-            fieldsMeasurements.forEach(fm => console.log(`   - ${fm}`));
-            console.log('💾 Latest values:', latestValues);
+            console.log(`📈 Chart points: ${chartDataPoints}`);
+            console.log(`   Proto (NMC90): ${chartTimeSeries.proto_temp.length} temp, ${chartTimeSeries.proto_humidity.length} humidity`);
+            console.log(`   Solar (Env): ${chartTimeSeries.solar_temp.length} temp, ${chartTimeSeries.solar_humidity.length} humidity`);
 
-            // Update debug panel
-            let debugText = `Found ${dataCount} data points\n\n`;
-            debugText += `Fields & Measurements:\n`;
-            fieldsMeasurements.forEach(fm => debugText += `  • ${fm}\n`);
-            debugText += `\nLatest Values:\n`;
-            Object.entries(latestValues).forEach(([k, v]) => debugText += `  • ${k}: ${v.toFixed(2)}\n`);
-            ui.debugOutput.textContent = debugText;
+            // Parse card data
+            const cardLines = cardCSV.trim().split('\n');
+            const latestValues = {};
 
-            // Update cards
+            for (let i = cardLines.length - 1; i >= 0; i--) {
+                const line = cardLines[i].trim();
+                if (!line || line.startsWith('#') || line.startsWith(',')) continue;
+
+                const parts = line.split(',');
+                if (parts.length < 9) continue;
+
+                const measurement = parts[8]?.trim();
+                const field = parts[7]?.trim();
+                const valueStr = parts[6]?.trim();
+
+                if (!field || !valueStr || !measurement) continue;
+
+                const value = parseFloat(valueStr);
+                if (isNaN(value)) continue;
+
+                // Create composite keys for ambient fields
+                if (field === "ambient_temp" || field === "ambient_humidity") {
+                    const key = `${field}_${measurement}`;
+                    if (!latestValues[key]) {
+                        latestValues[key] = value;
+                    }
+                } else {
+                    if (!latestValues[field]) {
+                        latestValues[field] = value;
+                    }
+                }
+            }
+
+            console.log(`💳 Latest values:`, latestValues);
+
+            // Update cards - SWAPPED LABELS
             updateValue(ui.voltageFiltered, 'card-voltage-filtered', latestValues['battery_voltage'], 3, 'V');
-            updateValue(ui.current, 'card-current', latestValues['load_current'], 0, 'mA');
-            updateValue(ui.power, 'card-power', latestValues['load_power'], 2, 'W');
-            updateValue(ui.soc, 'card-soc', latestValues['state_of_charge'], 1, '%');
             
             const luxValue = latestValues['light_lux'];
             if (luxValue !== undefined && !isNaN(luxValue)) {
@@ -605,77 +916,121 @@
                 } else {
                     updateValue(ui.lightLux, 'card-light-lux', luxValue, 0, 'lux');
                 }
+            } else {
+                updateValue(ui.lightLux, 'card-light-lux', undefined, 0, 'lux');
             }
-
-            // Try both keys for ambient data
-            const ambientTemp = latestValues['ambient_temp_nmc90_power_data'] || latestValues['ambient_temp'];
-            const ambientHum = latestValues['ambient_humidity_nmc90_power_data'] || latestValues['ambient_humidity'];
-            const protoTemp = latestValues['ambient_temp_environment_data'];
-            const protoHum = latestValues['ambient_humidity_environment_data'];
-
-            updateValue(ui.temp, 'card-temp', ambientTemp, 1, '°C');
-            updateValue(ui.humidity, 'card-humidity', ambientHum, 0, '%');
-            updateValue(ui.protoTemp, 'card-proto-temp', protoTemp, 1, '°C');
-            updateValue(ui.protoHumidity, 'card-proto-humidity', protoHum, 0, '%');
-
+            
+            updateValue(ui.current, 'card-current', latestValues['load_current'], 0, 'mA');
+            updateValue(ui.power, 'card-power', latestValues['load_power'], 2, 'W');
+            updateValue(ui.soc, 'card-soc', latestValues['state_of_charge'], 1, '%');
+            
+            // Prototype (from NMC90 measurement)
+            updateValue(ui.temp, 'card-temp', latestValues['ambient_temp_nmc90_power_data'], 1, '°C');
+            updateValue(ui.humidity, 'card-humidity', latestValues['ambient_humidity_nmc90_power_data'], 0, '%');
+            
+            // Solar (from environment_data measurement)
+            updateValue(ui.solarTemp, 'card-solar-temp', latestValues['ambient_temp_environment_data'], 1, '°C');
+            updateValue(ui.solarHumidity, 'card-solar-humidity', latestValues['ambient_humidity_environment_data'], 0, '%');
+            
             updateValue(ui.badReadings, 'card-bad', latestValues['bad_readings_total'], 0, '');
-            updateValue(ui.goodReadings, 'card-good', Math.max(0, dataCount - (latestValues['bad_readings_total'] || 0)), 0, '');
 
-            // Status
-            let status = 'IDLE', statusClass = 'status-idle';
-            if (latestValues['is_charging'] === 1) {
+            const badReadingsCount = latestValues['bad_readings_total'] !== undefined ? 
+                Math.round(latestValues['bad_readings_total']) : 0;
+            const goodReadingsCount = chartDataPoints > 0 ? 
+                Math.max(0, chartDataPoints - badReadingsCount) : 0;
+            updateValue(ui.goodReadings, 'card-good', goodReadingsCount, 0, '');
+
+            // Update status
+            let status = 'IDLE';
+            let statusClass = 'status-idle';
+            
+            if (latestValues['is_charging'] !== undefined && Math.round(latestValues['is_charging']) === 1) {
                 status = 'CHARGING';
                 statusClass = 'status-charging';
-            } else if (latestValues['is_discharging'] === 1) {
+            } else if (latestValues['is_discharging'] !== undefined && Math.round(latestValues['is_discharging']) === 1) {
                 status = 'DISCHARGING';
                 statusClass = 'status-discharging';
             }
-            ui.status.textContent = status;
-            ui.status.className = statusClass;
 
-            ui.dataPoints.textContent = dataCount;
+            if (ui.status) {
+                ui.status.textContent = status;
+                ui.status.className = statusClass;
+                flashCard('card-status');
+            }
 
-            // Update charts
+            ui.dataPoints.textContent = chartDataPoints;
+
+            // Update charts - SWAPPED DATA SOURCES
             if (charts.battery) {
-                charts.battery.data.datasets[0].data = timeSeries.battery_voltage;
-                charts.battery.data.datasets[1].data = timeSeries.state_of_charge;
+                charts.battery.data.datasets[0].data = chartTimeSeries.battery_voltage;
+                charts.battery.data.datasets[1].data = chartTimeSeries.state_of_charge;
                 charts.battery.update('none');
             }
 
             if (charts.power) {
-                charts.power.data.datasets[0].data = timeSeries.load_current;
-                charts.power.data.datasets[1].data = timeSeries.load_power;
+                charts.power.data.datasets[0].data = chartTimeSeries.load_current;
+                charts.power.data.datasets[1].data = chartTimeSeries.load_power;
                 charts.power.update('none');
             }
 
             if (charts.proto) {
-                charts.proto.data.datasets[0].data = timeSeries.proto_temp;
-                charts.proto.data.datasets[1].data = timeSeries.proto_humidity;
+                // Proto chart gets NMC90 data
+                charts.proto.data.datasets[0].data = chartTimeSeries.proto_temp;
+                charts.proto.data.datasets[1].data = chartTimeSeries.proto_humidity;
                 charts.proto.update('none');
             }
 
             if (charts.solar) {
-                charts.solar.data.datasets[0].data = timeSeries.light_lux;
-                charts.solar.data.datasets[1].data = timeSeries.ambient_temp;
-                charts.solar.data.datasets[2].data = timeSeries.ambient_humidity;
+                // Solar chart gets environment_data
+                charts.solar.data.datasets[0].data = chartTimeSeries.light_lux;
+                charts.solar.data.datasets[1].data = chartTimeSeries.solar_temp;
+                charts.solar.data.datasets[2].data = chartTimeSeries.solar_humidity;
                 charts.solar.update('none');
             }
 
-            console.log('✅ Update complete!');
+            console.log(`✅ UPDATE COMPLETE!`);
         }
 
+        // =============================================================================
+        // UI UPDATE HELPERS
+        // =============================================================================
         function updateValue(element, cardId, value, decimals, unit) {
-            if (!element) return;
-            const formatted = (value !== undefined && value !== null && !isNaN(value)) ? Number(value).toFixed(decimals) : '--';
-            element.textContent = formatted;
+            if (!element) {
+                console.warn(`Element for card ${cardId} NOT FOUND!`);
+                return;
+            }
+
+            const formattedValue = (value !== undefined && value !== null && !isNaN(value)) ? 
+                Number(value).toFixed(decimals) : '--';
+            
+            element.textContent = formattedValue;
+
             const unitEl = element.nextElementSibling;
             if (unitEl && unitEl.classList.contains('metric-unit')) {
                 unitEl.textContent = unit;
             }
+
+            flashCard(cardId);
         }
 
+        function flashCard(cardId) {
+            const card = document.getElementById(cardId);
+            if (card) {
+                card.classList.remove('flash');
+                void card.offsetWidth;
+                card.classList.add('flash');
+                setTimeout(() => {
+                    card.classList.remove('flash');
+                }, 550);
+            }
+        }
+
+        // =============================================================================
+        // STATUS & ERROR HANDLING
+        // =============================================================================
         function updateStatus(connected) {
             if (!ui.statusBadge || !ui.statusText || !ui.liveDot || !ui.lastUpdate) return;
+
             if (connected) {
                 ui.statusBadge.className = 'status-badge status-connected';
                 ui.statusText.textContent = 'Connected';
@@ -719,6 +1074,9 @@
             if (ui.successContainer) ui.successContainer.innerHTML = '';
         }
 
+        // =============================================================================
+        // CLEANUP
+        // =============================================================================
         window.addEventListener('beforeunload', () => {
             if (updateInterval) clearInterval(updateInterval);
         });
