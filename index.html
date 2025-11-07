@@ -605,8 +605,8 @@
             
             const protoTemp = latestValues['ambient_temp_nmc90_power_data'] || latestValues['ambient_temp'];
             const protoHum = latestValues['ambient_humidity_nmc90_power_data'] || latestValues['ambient_humidity'];
-            const ambientTemp = latestValues['ambient_temp_environment_data'] || latestValues['ambient_temp1'];;
-            const ambientHum = latestValues['ambient_humidity_environment_data'] || latestValues['ambient_humidity1'];;
+            const ambientTemp = latestValues['ambient_temp_environment_data'] || latestValues['ambient_temp'];;
+            const ambientHum = latestValues['ambient_humidity_environment_data'] || latestValues['ambient_humidity'];;
 
             updateValue(ui.temp, 'card-temp', ambientTemp, 1, '°C');
             updateValue(ui.humidity, 'card-humidity', ambientHum, 0, '%');
