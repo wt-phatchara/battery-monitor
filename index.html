@@ -348,11 +348,6 @@
                 showSuccess('Data refreshed!');
             });
         }
-
-
-        // =================================================================
-        // ============= ⬇️ START: MODIFIED FUNCTION ⬇️ =============
-        // =================================================================
         
         function initializeCharts() {
             const chartOptions = {
@@ -372,7 +367,6 @@
                         ticks: { color: '#6c757d', font: { size: 9 }, maxTicksLimit: 6 },
                         grid: { display: false },
                         border: { display: false }
-                        // Removed 'grace' to allow suggestedMin/Max to work better
                     },
                     y1: {
                         position: 'right',
@@ -406,12 +400,12 @@
                         y: { 
                             ...chartOptions.scales.y, 
                             position: 'left',
-                            suggestedMin: 3.0, // <-- USE SUGGESTED MIN
-                            suggestedMax: 4.3, // <-- USE SUGGESTED MAX
+                            suggestedMin: 3.0, 
+                            suggestedMax: 4.3, 
                             ticks: {
                                 ...chartOptions.scales.y.ticks,
                                 callback: function(value, index, ticks) {
-                                    return Number(value).toFixed(2); // Format to X.XX
+                                    return Number(value).toFixed(2);
                                 }
                             }
                         }, 
@@ -429,20 +423,19 @@
                         { label: 'Power (W)', data: [], borderColor: '#dc3545', backgroundColor: '#dc3545', yAxisID: 'y1', ...lineOpts }
                     ]
                 },
-                // --- USE SUGGESTED min/max ---
                 options: {
                     ...chartOptions,
                     scales: {
                         ...chartOptions.scales,
                         y: {
                             ...chartOptions.scales.y,
-                            suggestedMin: -10, // <-- USE SUGGESTED MIN (mA)
-                            suggestedMax: 10   // <-- USE SUGGESTED MAX (mA)
+                            suggestedMin: -10,
+                            suggestedMax: 10  
                         },
                         y1: {
                             ...chartOptions.scales.y1,
-                            suggestedMin: -2,  // <-- USE SUGGESTED MIN (W)
-                            suggestedMax: 2    // <-- USE SUGGESTED MAX (W)
+                            suggestedMin: -2,
+                            suggestedMax: 2   
                         }
                     }
                 }
@@ -472,10 +465,6 @@
 
             console.log('✅ Charts initialized');
         }
-
-        // =================================================================
-        // ============== ⬆️ END: MODIFIED FUNCTION ⬆️ ==============
-        // =================================================================
 
 
         function getTimeRangeQuery() {
@@ -673,12 +662,19 @@
                 charts.proto.data.datasets[1].data = timeSeries.proto_humidity;
                 charts.proto.update('none');
             }
+            
+            // =================================================================
+            // ============= ⬇️ START: CORRECTED SECTION ⬇️ =============
+            // =================================================================
             if (charts.solar) {
                 charts.solar.data.datasets[0].data = timeSeries.light_lux;
                 charts.solar.data.datasets[1].data = timeSeries.ambient_temp;
                 charts.solar.update('none');
-True
+                // The stray 'True' word that caused the error was here. It has been removed.
             }
+            // =================================================================
+            // ============== ⬆️ END: CORRECTED SECTION ⬆️ ==============
+            // =================================================================
 
             console.log('✅ Update complete!');
         }
