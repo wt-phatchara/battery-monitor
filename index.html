@@ -282,7 +282,7 @@
         </div>
 
         <div class="footer">
-            <p>Powered by CEST VISTEC Battery Technology Solutions | Operational Monitor v3.2</p>
+            <p>Powered by CEST VISTEC Battery Technology Solutions | Operational Monitor v3.4</p>
             <p><a href="https://github.com/influxdata/influxdb" target="_blank" style="color: #6c757d;">Built with InfluxDB</a> & <a href="https://www.chartjs.org/" target="_blank" style="color: #6c757d;">Chart.js</a></p>
         </div>
     </div>
@@ -315,7 +315,7 @@
             soc: document.getElementById('soc'),
             status: document.getElementById('status'),
             temp: document.getElementById('temp'),
-            // humidity: document.getElementById('humidity'), // Still referenced by CSS, but not in JS logic
+            // humidity: document.getElementById('humidity'), 
             protoTemp: document.getElementById('proto-temp'),
             protoHumidity: document.getElementById('proto-humidity'),
             batteryChartCanvas: document.getElementById('battery-chart'),
@@ -349,6 +349,11 @@
             });
         }
 
+
+        // =================================================================
+        // ============= ⬇️ START: MODIFIED FUNCTION ⬇️ =============
+        // =================================================================
+        
         function initializeCharts() {
             const chartOptions = {
                 responsive: true,
@@ -366,15 +371,14 @@
                     y: {
                         ticks: { color: '#6c757d', font: { size: 9 }, maxTicksLimit: 6 },
                         grid: { display: false },
-                        border: { display: false },
-                        grace: '5%'
+                        border: { display: false }
+                        // Removed 'grace' to allow suggestedMin/Max to work better
                     },
                     y1: {
                         position: 'right',
                         ticks: { color: '#6c757d', font: { size: 9 }, maxTicksLimit: 6 },
                         grid: { display: false },
-                        border: { display: false },
-                        grace: '5%'
+                        border: { display: false }
                     }
                 },
                 plugins: {
@@ -386,10 +390,6 @@
             const lineOpts = { fill: false, tension: 0, borderWidth: 0, pointRadius: 2, pointHoverRadius: 4, spanGaps: false, showLine: false };
 
             Object.values(charts).forEach(chart => chart?.destroy());
-
-            // =================================================================
-            // ============= ⬇️ START: MODIFIED SECTION ⬇️ =============
-            // =================================================================
             
             charts.battery = new Chart(ui.batteryChartCanvas, {
                 type: 'line',
@@ -406,9 +406,10 @@
                         y: { 
                             ...chartOptions.scales.y, 
                             position: 'left',
+                            suggestedMin: 3.0, // <-- USE SUGGESTED MIN
+                            suggestedMax: 4.3, // <-- USE SUGGESTED MAX
                             ticks: {
-                                ...chartOptions.scales.y.ticks, // Inherit existing ticks
-                                // Add the formatting callback
+                                ...chartOptions.scales.y.ticks,
                                 callback: function(value, index, ticks) {
                                     return Number(value).toFixed(2); // Format to X.XX
                                 }
@@ -419,10 +420,6 @@
                 }
             });
 
-            // =================================================================
-            // ============== ⬆️ END: MODIFIED SECTION ⬆️ ==============
-            // =================================================================
-
 
             charts.power = new Chart(ui.powerChartCanvas, {
                 type: 'line',
@@ -432,7 +429,23 @@
                         { label: 'Power (W)', data: [], borderColor: '#dc3545', backgroundColor: '#dc3545', yAxisID: 'y1', ...lineOpts }
                     ]
                 },
-                options: chartOptions
+                // --- USE SUGGESTED min/max ---
+                options: {
+                    ...chartOptions,
+                    scales: {
+                        ...chartOptions.scales,
+                        y: {
+                            ...chartOptions.scales.y,
+                            suggestedMin: -10, // <-- USE SUGGESTED MIN (mA)
+                            suggestedMax: 10   // <-- USE SUGGESTED MAX (mA)
+                        },
+                        y1: {
+                            ...chartOptions.scales.y1,
+                            suggestedMin: -2,  // <-- USE SUGGESTED MIN (W)
+                            suggestedMax: 2    // <-- USE SUGGESTED MAX (W)
+                        }
+                    }
+                }
             });
 
             charts.proto = new Chart(ui.protoChartCanvas, {
@@ -450,7 +463,7 @@
                 type: 'line',
                 data: {
                     datasets: [
-                        { label: 'Solar Light (lux)', data: [], borderColor: '#ffc107', backgroundColor: '#ffc1S.XX07', yAxisID: 'y', ...lineOpts },
+                        { label: 'Solar Light (lux)', data: [], borderColor: '#ffc107', backgroundColor: '#ffc107', yAxisID: 'y', ...lineOpts },
                         { label: 'Ambient Temp (°C)', data: [], borderColor: '#fd7e14', backgroundColor: '#fd7e14', yAxisID: 'y1', ...lineOpts }
                     ]
                 },
@@ -459,6 +472,11 @@
 
             console.log('✅ Charts initialized');
         }
+
+        // =================================================================
+        // ============== ⬆️ END: MODIFIED FUNCTION ⬆️ ==============
+        // =================================================================
+
 
         function getTimeRangeQuery() {
             const ranges = {
@@ -659,6 +677,7 @@
                 charts.solar.data.datasets[0].data = timeSeries.light_lux;
                 charts.solar.data.datasets[1].data = timeSeries.ambient_temp;
                 charts.solar.update('none');
+True
             }
 
             console.log('✅ Update complete!');
@@ -670,10 +689,8 @@
             
             const formatted = (value !== undefined && value !== null && !isNaN(value)) ? Number(value).toFixed(decimals) : '--';
             
-            // This check ensures we only apply card-specific formatting
-            // and don't affect the chart Y-axis formatting.
             if(cardId === 'card-voltage-filtered') {
-                element.textContent = formatted; // This is the X.XX format
+                element.textContent = formatted; 
             } else {
                 element.textContent = formatted;
             }
@@ -694,7 +711,6 @@
                 cardElement.classList.add('critical-alert');
             } else if (cardId === 'card-voltage-filtered' && value < 3.2 && value > 0) {
                 cardElement.classList.add('critical-alert');
-_http_http_response_body
             }
         }
         
