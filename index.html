@@ -1,727 +1,449 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CEST VISTEC - CEST NMC90 Battery Monitor</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CEST VISTEC - CEST NMC90 Battery Monitor</title>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 
-    <style>
-        /* --- Base & Reset --- */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
-        body {
-            font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-            background-color: #ffffff;
-            color: #343a40;
-            padding: 5px;
-            min-height: 100vh;
-            line-height: 1.5;
-            font-size: 14px;
-        }
-        .container {
-            max-width: 1300px;
-            margin: 0 auto;
-            padding: 0 10px;
-        }
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{font-family:'Open Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#fff;color:#343a40;padding:5px;min-height:100vh;line-height:1.5;font-size:14px}
+    .container{max-width:1300px;margin:0 auto;padding:0 10px}
 
-        /* --- Header --- */
-        .header { text-align: center; margin-bottom: 25px; padding: 20px 15px; background-color: #ffffff; border-radius: 6px; border: 1px solid #e9ecef; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03); }
-        .header h1 { font-size: 1.8em; margin-bottom: 5px; font-weight: 700; color: #20398c; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .header .subtitle { font-size: 0.95em; color: #495057; margin-bottom: 10px; }
-        .version-badge { display: inline-block; background: #e7f1ff; color: #0d6efd; border: 1px solid #cce0ff; padding: 4px 10px; border-radius: 10px; font-weight: 600; font-size: 0.75em; margin-bottom: 12px; }
-        .company-link { color: #20398c; text-decoration: none; font-size: 0.8em; font-weight: 600; transition: color 0.2s ease; }
-        .company-link:hover { color: #1a2f70; text-decoration: underline; }
+    .header{table-layout:fixed;text-align:center;margin-bottom:25px;padding:20px 15px;background:#fff;border-radius:6px;border:1px solid #e9ecef;box-shadow:0 1px 3px rgba(0,0,0,.03)}
+    .header h1{font-size:1.8em;margin-bottom:5px;font-weight:700;color:#20398c;display:flex;align-items:center;justify-content:center;gap:8px}
+    .header .subtitle{font-size:.95em;color:#495057;margin-bottom:10px}
+    .company-link{color:#20398c;text-decoration:none;font-size:.8em;font-weight:600}
+    .company-link:hover{color:#1a2f70;text-decoration:underline}
 
-        /* --- Status Bar --- */
-        .status-bar { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .status-badge { padding: 5px 12px; border-radius: 12px; font-size: 0.75em; font-weight: 600; display: flex; align-items: center; gap: 5px; background-color: #f8f9fa; border: 1px solid #dee2e6; color: #495057; }
-        .status-connected { background-color: #d1e7dd; color: #0f5132; border-color: #badbcc;}
-        .status-disconnected { background-color: #f8d7da; color: #842029; border-color: #f5c2c7;}
-        .live-dot { display: inline-block; width: 6px; height: 6px; background: #198754; border-radius: 50%; animation: pulse 1.8s infinite ease-in-out; }
-        .status-disconnected .live-dot { display: none; }
-        @keyframes pulse { 0%, 100% { transform: scale(0.9); opacity: 0.7; } 50% { transform: scale(1.1); opacity: 1; } }
+    .status-bar{display:flex;justify-content:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+    .status-badge{padding:5px 12px;border-radius:12px;font-size:.75em;font-weight:600;display:flex;align-items:center;gap:5px;background:#f8f9fa;border:1px solid #dee2e6;color:#495057}
+    .status-connected{background:#d1e7dd;color:#0f5132;border-color:#badbcc}
+    .status-disconnected{background:#f8d7da;color:#842029;border-color:#f5c2c7}
+    .live-dot{display:inline-block;width:6px;height:6px;background:#198754;border-radius:50%;animation:pulse 1.8s infinite ease-in-out}
+    .status-disconnected .live-dot{display:none}
+    @keyframes pulse{0%,100%{transform:scale(.9);opacity:.7}50%{transform:scale(1.1);opacity:1}}
 
-        /* --- Toolbar --- */
-        .toolbar { background: #ffffff; border-radius: 6px; padding: 10px 15px; margin-bottom: 20px; display: flex; gap: 15px; flex-wrap: wrap; align-items: center; justify-content: space-between; border: 1px solid #e9ecef; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
-        .toolbar-group { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        .toolbar label { font-size: 0.85em; font-weight: 600; color: #495057; }
-        .toolbar select, .toolbar input[type="datetime-local"], .toolbar button { padding: 6px 10px; border: 1px solid #ced4da; border-radius: 4px; font-size: 0.85em; background-color: #fff; color: #495057; cursor: pointer; transition: all 0.2s ease; }
-        .toolbar select:hover, .toolbar button:hover { border-color: #20398c; background-color: #f8f9fa; }
-        .toolbar button { font-weight: 600; display: flex; align-items: center; gap: 5px; }
-        .toolbar button:active { transform: translateY(1px); }
-        .toolbar .btn-primary { background-color: #20398c; color: #fff; border-color: #20398c; }
-        .toolbar .btn-primary:hover { background-color: #1a2f70; }
+    .toolbar{background:#fff;border-radius:6px;padding:10px 15px;margin-bottom:20px;display:flex;gap:15px;flex-wrap:wrap;align-items:center;justify-content:space-between;border:1px solid #e9ecef;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+    .toolbar-group{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .toolbar label{font-size:.85em;font-weight:600;color:#495057}
+    .toolbar select,.toolbar button{padding:6px 10px;border:1px solid #ced4da;border-radius:4px;font-size:.85em;background:#fff;color:#495057;cursor:pointer}
+    .toolbar .btn-primary{background:#20398c;color:#fff;border-color:#20398c}
 
-        /* --- Debug Panel --- */
-        .debug-panel { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 15px; margin-bottom: 20px; font-family: 'Courier New', monospace; font-size: 0.75em; max-height: 200px; overflow-y: auto; }
-        .debug-panel h3 { font-size: 1em; margin-bottom: 10px; color: #495057; }
-        .debug-panel pre { margin: 0; white-space: pre-wrap; word-wrap: break-word; }
+    /* Hide “Diagnostic Mode” badge and Debug panel (your #2 & #3) */
+    .version-badge{display:none}
+    .debug-panel{display:none}
 
-        /* --- Metric Cards --- */
-        .metrics { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 20px; }
-        .metric-card { background: #ffffff; padding: 10px; border-radius: 6px; text-align: center; border: 1px solid #e9ecef; box-shadow: 0 1px 2px rgba(0,0,0,0.03); transition: all 0.25s ease; }
-        .metric-card:hover { border-color: #20398c; box-shadow: 0 2px 4px rgba(32, 57, 140, 0.1); }
-        .metric-card.flash { animation: flash-animation 0.55s ease-in-out; }
-        @keyframes flash-animation { 0%, 100% { background-color: #ffffff; } 50% { background-color: #e7f1ff; } }
-        .metric-label { font-size: 0.7em; color: #6c757d; text-transform: uppercase; font-weight: 600; margin-bottom: 4px; letter-spacing: 0.3px; }
-        .metric-value { font-size: 1.6em; font-weight: 700; color: #343a40; line-height: 1.1; display: flex; align-items: baseline; justify-content: center; gap: 3px; }
-        .metric-unit { font-size: 0.6em; font-weight: 600; color: #6c757d; }
+    .metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px}
+    .metric-card{background:#fff;padding:10px;border-radius:6px;text-align:center;border:1px solid #e9ecef;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+    .metric-label{font-size:.7em;color:#6c757d;text-transform:uppercase;font-weight:600;margin-bottom:4px;letter-spacing:.3px}
+    .metric-value{font-size:1.6em;font-weight:700;color:#343a40;line-height:1.1;display:flex;align-items:baseline;justify-content:center;gap:3px}
+    .metric-unit{font-size:.6em;font-weight:600;color:#6c757d}
+    .status-idle{background:#f8f9fa;color:#6c757d;padding:4px 10px;border-radius:10px;font-size:.7em;font-weight:700}
+    .status-charging{background:#d1e7dd;color:#0f5132;padding:4px 10px;border-radius:10px;font-size:.7em;font-weight:700}
+    .status-discharging{background:#f8d7da;color:#842029;padding:4px 10px;border-radius:10px;font-size:.7em;font-weight:700}
 
-        /* --- Status Specific --- */
-        .status-idle { background: #f8f9fa; color: #6c757d; padding: 4px 10px; border-radius: 10px; font-size: 0.7em; font-weight: 700; }
-        .status-charging { background: #d1e7dd; color: #0f5132; padding: 4px 10px; border-radius: 10px; font-size: 0.7em; font-weight: 700; }
-        .status-discharging { background: #f8d7da; color: #842029; padding: 4px 10px; border-radius: 10px; font-size: 0.7em; font-weight: 700; }
+    .charts{display:grid;grid-template-columns:repeat(2,1fr);gap:15px;margin-bottom:20px}
+    .chart-container{background:#fff;padding:12px;border-radius:6px;border:1px solid #e9ecef;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+    .chart-title{font-size:.85em;font-weight:700;color:#495057;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e9ecef;display:flex;align-items:center;gap:6px}
+    .chart-canvas{position:relative;height:200px}
 
-        /* --- Charts Grid --- */
-        .charts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px; }
-        .chart-container { background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid #e9ecef; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
-        .chart-title { font-size: 0.85em; font-weight: 700; color: #495057; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #e9ecef; display: flex; align-items: center; gap: 6px; }
-        .chart-canvas { position: relative; height: 200px; }
+    .footer{text-align:center;padding:20px 10px;margin-top:30px;color:#6c757d;font-size:.75em;border-top:1px solid #e9ecef}
 
-        /* --- Messages --- */
-        .error-container, .success-container { margin-bottom: 15px; }
-        .error-message { background-color: #f8d7da; color: #842029; padding: 10px 15px; border-radius: 4px; border: 1px solid #f5c2c7; font-size: 0.85em; font-weight: 600; }
-        .success-message { background-color: #d1e7dd; color: #0f5132; padding: 10px 15px; border-radius: 4px; border: 1px solid #badbcc; font-size: 0.85em; font-weight: 600; }
-
-        /* --- Footer --- */
-        .footer { text-align: center; padding: 20px 10px; margin-top: 30px; color: #6c757d; font-size: 0.75em; border-top: 1px solid #e9ecef; }
-
-        /* --- Responsive --- */
-        @media (max-width: 768px) {
-            .charts { grid-template-columns: 1fr; }
-            .metrics { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-            .toolbar { flex-direction: column; align-items: stretch; }
-            .toolbar-group { width: 100%; justify-content: space-between; }
-        }
-    </style>
+    @media (max-width:768px){
+      .charts{grid-template-columns:1fr}
+      .metrics{grid-template-columns:repeat(2,1fr);gap:8px}
+      .toolbar{flex-direction:column;align-items:stretch}
+      .toolbar-group{width:100%;justify-content:space-between}
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <h1>🔋 NMC90 Battery Field Test Monitor</h1>
-            <p class="subtitle">Real-time Battery & Environmental Monitoring</p>
-            <span class="version-badge">DIAGNOSTIC MODE</span><br>
-            <a href="https://cest.vistec.ac.th" class="company-link" target="_blank">🔬 CEST VISTEC - Battery Technology Solutions</a>
-        </div>
-
-        <!-- Status Bar -->
-        <div class="status-bar">
-            <div class="status-badge status-connected" id="status-badge">
-                <span class="live-dot" id="live-dot"></span>
-                <span id="status-text">Connecting...</span>
-            </div>
-            <div class="status-badge">
-                <span>Last Update: <strong id="last-update">--:--:--</strong></span>
-            </div>
-            <div class="status-badge">
-                <span>Frames: <strong id="data-points">0</strong></span>
-            </div>
-        </div>
-
-        <!-- Debug Panel -->
-        <div class="debug-panel">
-            <h3>🔍 Data Structure Diagnostic (Check Console F12 for full details)</h3>
-            <pre id="debug-output">Waiting for data...</pre>
-        </div>
-
-        <!-- Error/Success Messages -->
-        <div class="error-container" id="error-container"></div>
-        <div class="success-container" id="success-container"></div>
-
-        <!-- Toolbar -->
-        <div class="toolbar">
-            <div class="toolbar-group">
-                <label for="time-range-select">Time Range:</label>
-                <select id="time-range-select">
-                    <option value="5m">Last 5 Minutes</option>
-                    <option value="15m">Last 15 Minutes</option>
-                    <option value="30m">Last 30 Minutes</option>
-                    <option value="1h" selected>Last 1 Hour</option>
-                    <option value="3h">Last 3 Hours</option>
-                    <option value="6h">Last 6 Hours</option>
-                    <option value="12h">Last 12 Hours</option>
-                    <option value="24h">Last 24 Hours</option>
-                    <option value="7d">Last 7 Days</option>
-                </select>
-            </div>
-
-            <div class="toolbar-group">
-                <button class="btn-primary" id="refresh-btn">🔄 Refresh</button>
-            </div>
-        </div>
-
-        <!-- Metric Cards -->
-        <div class="metrics">
-            <div class="metric-card" id="card-voltage-filtered">
-                <div class="metric-label">Voltage</div>
-                <div class="metric-value">
-                    <span id="voltage-filtered">--</span>
-                    <span class="metric-unit">V</span>
-                </div>
-            </div>
-            <div class="metric-card" id="card-current">
-                <div class="metric-label">Current</div>
-                <div class="metric-value">
-                    <span id="current">--</span>
-                    <span class="metric-unit">mA</span>
-                </div>
-            </div>
-            <div class="metric-card" id="card-power">
-                <div class="metric-label">Power</div>
-                <div class="metric-value">
-                    <span id="power">--</span>
-                    <span class="metric-unit">W</span>
-                </div>
-            </div>
-            <div class="metric-card" id="card-soc">
-                <div class="metric-label">State of Charge</div>
-                <div class="metric-value">
-                    <span id="soc">--</span>
-                    <span class="metric-unit">%</span>
-                </div>
-            </div>
-            <div class="metric-card" id="card-status">
-                <div class="metric-label">Status</div>
-                <div class="metric-value">
-                    <span class="status-idle" id="status">IDLE</span>
-                </div>
-            </div>
-            <div class="metric-card" id="card-light-lux">
-                <div class="metric-label">Solar Light</div>
-                <div class="metric-value">
-                    <span id="light-lux">--</span>
-                    <span class="metric-unit">lux</span>
-                </div>
-            </div>
-            
-            <div class="metric-card" id="card-temp">
-                <div class="metric-label">Ambient Temp</div>
-                <div class="metric-value">
-                    <span id="temp">--</span>
-                    <span class="metric-unit">°C</span>
-                </div>
-            </div>
-            <div class="metric-card" id="card-humidity">
-                <div class="metric-label">Ambient Humidity</div>
-                <div class="metric-value">
-                    <span id="humidity">--</span>
-                    <span class="metric-unit">%</span>
-                </div>
-            </div>
-            <div class="metric-card" id="card-proto-temp">
-                <div class="metric-label">Prototype Temp</div>
-                <div class="metric-value">
-                    <span id="proto-temp">--</span>
-                    <span class="metric-unit">°C</span>
-                </div>
-            </div>
-            <div class="metric-card" id="card-proto-humidity">
-                <div class="metric-label">Prototype Humidity</div>
-                <div class="metric-value">
-                    <span id="proto-humidity">--</span>
-                    <span class="metric-unit">%</span>
-                </div>
-            </div>
-            <div class="metric-card" id="card-good">
-                <div class="metric-label">Good Readings</div>
-                <div class="metric-value">
-                    <span id="good-readings">--</span>
-                    <span class="metric-unit"></span>
-                </div>
-            </div>
-            <div class="metric-card" id="card-bad">
-                <div class="metric-label">Bad Readings</div>
-                <div class="metric-value">
-                    <span id="bad-readings">--</span>
-                    <span class="metric-unit"></span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Charts -->
-        <div class="charts">
-            <div class="chart-container">
-                <div class="chart-title">🔋 Battery Voltage & State of Charge</div>
-                <div class="chart-canvas">
-                    <canvas id="battery-chart"></canvas>
-                </div>
-            </div>
-            <div class="chart-container">
-                <div class="chart-title">⚡ Current & Power</div>
-                <div class="chart-canvas">
-                    <canvas id="power-chart"></canvas>
-                </div>
-            </div>
-            <div class="chart-container">
-                <div class="chart-title">🌡️ Prototype Temperature & Humidity</div>
-                <div class="chart-canvas">
-                    <canvas id="proto-chart"></canvas>
-                </div>
-            </div>
-            <div class="chart-container">
-                <div class="chart-title">☀️ Solar Light & Ambient Conditions</div>
-                <div class="chart-canvas">
-                    <canvas id="solar-chart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="footer">
-            <p>Powered by CEST VISTEC Battery Technology Solutions | Diagnostic Mode v3.0</p>
-            <p><a href="https://github.com/influxdata/influxdb" target="_blank" style="color: #6c757d;">Built with InfluxDB</a> & <a href="https://www.chartjs.org/" target="_blank" style="color: #6c757d;">Chart.js</a></p>
-        </div>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>🔋 NMC90 Battery Field Test Monitor</h1>
+      <p class="subtitle">Real-time Battery & Environmental Monitoring</p>
+      <a href="https://cest.vistec.ac.th" class="company-link" target="_blank">🔬 CEST VISTEC - Battery Technology Solutions</a>
     </div>
 
-    <script>
-        'use strict';
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div class="status-badge status-connected" id="status-badge">
+        <span class="live-dot" id="live-dot"></span>
+        <span id="status-text">Connecting...</span>
+      </div>
+      <div class="status-badge"><span>Last Update: <strong id="last-update">--:--:--</strong></span></div>
+      <div class="status-badge"><span>Frames: <strong id="data-points">0</strong></span></div>
+    </div>
 
-        const config = {
-            url: 'https://us-east-1-1.aws.cloud2.influxdata.com',
-            token: 'fRjbZpkh28B7HIaqHyR4A62Jr2bGwiC8Hcc-LwaCUxtKojBMH39CscUEuqp9PTDuqab_3yEfFGtCtsdCYD52Fw==',
-            org: '060e7983bb6be38e',
-            bucket: 'solar_bucket'
-        };
+    <!-- Debug panel (hidden) -->
+    <div class="debug-panel">
+      <h3>🔍 Data Structure Diagnostic (Check Console F12 for full details)</h3>
+      <pre id="debug-output">Waiting for data...</pre>
+    </div>
 
-        let isUpdating = false;
-        let updateInterval = null;
-        let currentTimeRange = '1h';
+    <!-- Messages -->
+    <div class="error-container" id="error-container"></div>
+    <div class="success-container" id="success-container"></div>
 
-        const charts = { battery: null, power: null, proto: null, solar: null };
-        const ui = {
-            statusBadge: document.getElementById('status-badge'),
-            statusText: document.getElementById('status-text'),
-            liveDot: document.getElementById('live-dot'),
-            lastUpdate: document.getElementById('last-update'),
-            dataPoints: document.getElementById('data-points'),
-            debugOutput: document.getElementById('debug-output'),
-            voltageFiltered: document.getElementById('voltage-filtered'),
-            lightLux: document.getElementById('light-lux'),
-            current: document.getElementById('current'),
-            power: document.getElementById('power'),
-            soc: document.getElementById('soc'),
-            status: document.getElementById('status'),
-            temp: document.getElementById('temp'),
-            humidity: document.getElementById('humidity'),
-            protoTemp: document.getElementById('proto-temp'),
-            protoHumidity: document.getElementById('proto-humidity'),
-            goodReadings: document.getElementById('good-readings'),
-            badReadings: document.getElementById('bad-readings'),
-            batteryChartCanvas: document.getElementById('battery-chart'),
-            powerChartCanvas: document.getElementById('power-chart'),
-            protoChartCanvas: document.getElementById('proto-chart'),
-            solarChartCanvas: document.getElementById('solar-chart'),
-            timeRangeSelect: document.getElementById('time-range-select'),
-            refreshBtn: document.getElementById('refresh-btn'),
-            errorContainer: document.getElementById('error-container'),
-            successContainer: document.getElementById('success-container')
-        };
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="toolbar-group">
+        <label for="time-range-select">Time Range:</label>
+        <select id="time-range-select">
+          <option value="5m">Last 5 Minutes</option>
+          <option value="15m">Last 15 Minutes</option>
+          <option value="30m">Last 30 Minutes</option>
+          <option value="1h" selected>Last 1 Hour</option>
+          <option value="3h">Last 3 Hours</option>
+          <option value="6h">Last 6 Hours</option>
+          <option value="12h">Last 12 Hours</option>
+          <option value="24h">Last 24 Hours</option>
+          <option value="7d">Last 7 Days</option>
+        </select>
+      </div>
+      <div class="toolbar-group">
+        <button class="btn-primary" id="refresh-btn">🔄 Refresh</button>
+      </div>
+    </div>
 
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 Initializing DIAGNOSTIC MODE...');
-            initializeCharts();
-            setupEventListeners();
-            fetchData();
-            updateInterval = setInterval(fetchData, 5000);
+    <!-- Metric Cards -->
+    <div class="metrics">
+      <div class="metric-card" id="card-voltage-filtered"><div class="metric-label">Voltage</div><div class="metric-value"><span id="voltage-filtered">--</span><span class="metric-unit">V</span></div></div>
+      <div class="metric-card" id="card-current"><div class="metric-label">Current</div><div class="metric-value"><span id="current">--</span><span class="metric-unit">mA</span></div></div>
+      <div class="metric-card" id="card-power"><div class="metric-label">Power</div><div class="metric-value"><span id="power">--</span><span class="metric-unit">W</span></div></div>
+      <div class="metric-card" id="card-soc"><div class="metric-label">State of Charge</div><div class="metric-value"><span id="soc">--</span><span class="metric-unit">%</span></div></div>
+      <div class="metric-card" id="card-status"><div class="metric-label">Status</div><div class="metric-value"><span class="status-idle" id="status">IDLE</span></div></div>
+      <div class="metric-card" id="card-light-lux"><div class="metric-label">Solar Light</div><div class="metric-value"><span id="light-lux">--</span><span class="metric-unit">lux</span></div></div>
+      <div class="metric-card" id="card-temp"><div class="metric-label">Ambient Temp</div><div class="metric-value"><span id="temp">--</span><span class="metric-unit">°C</span></div></div>
+      <div class="metric-card" id="card-humidity"><div class="metric-label">Ambient Humidity</div><div class="metric-value"><span id="humidity">--</span><span class="metric-unit">%</span></div></div>
+      <div class="metric-card" id="card-proto-temp"><div class="metric-label">Prototype Temp</div><div class="metric-value"><span id="proto-temp">--</span><span class="metric-unit">°C</span></div></div>
+      <div class="metric-card" id="card-proto-humidity"><div class="metric-label">Prototype Humidity</div><div class="metric-value"><span id="proto-humidity">--</span><span class="metric-unit">%</span></div></div>
+      <div class="metric-card" id="card-good"><div class="metric-label">Good Readings</div><div class="metric-value"><span id="good-readings">--</span></div></div>
+      <div class="metric-card" id="card-bad"><div class="metric-label">Bad Readings</div><div class="metric-value"><span id="bad-readings">--</span></div></div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts">
+      <div class="chart-container">
+        <div class="chart-title">🔋 Battery Voltage & State of Charge</div>
+        <div class="chart-canvas"><canvas id="battery-chart"></canvas></div>
+      </div>
+      <div class="chart-container">
+        <div class="chart-title">⚡ Current & Power</div>
+        <div class="chart-canvas"><canvas id="power-chart"></canvas></div>
+      </div>
+      <div class="chart-container">
+        <div class="chart-title">🌡️ NMC90 Ambient Temperature & Humidity</div>
+        <div class="chart-canvas"><canvas id="nmc90-ambient-chart"></canvas></div>
+      </div>
+      <div class="chart-container">
+        <div class="chart-title">☀️ Solar Light & Ambient Conditions (Environment)</div>
+        <div class="chart-canvas"><canvas id="solar-chart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>Powered by CEST VISTEC Battery Technology Solutions | Diagnostic Mode v3.0</p>
+      <p><a href="https://github.com/influxdata/influxdb" target="_blank" style="color:#6c757d;">Built with InfluxDB</a> & <a href="https://www.chartjs.org/" target="_blank" style="color:#6c757d;">Chart.js</a></p>
+    </div>
+  </div>
+
+  <script>
+    'use strict';
+
+    const config = {
+      url: 'https://us-east-1-1.aws.cloud2.influxdata.com',
+      token: 'fRjbZpkh28B7HIaqHyR4A62Jr2bGwiC8Hcc-LwaCUxtKojBMH39CscUEuqp9PTDuqab_3yEfFGtCtsdCYD52Fw==',
+      org: '060e7983bb6be38e',
+      bucket: 'solar_bucket'
+    };
+
+    let isUpdating = false;
+    let updateInterval = null;
+    let currentTimeRange = '1h';
+
+    const charts = { battery:null, power:null, nmcAmbient:null, solar:null };
+
+    const ui = {
+      statusBadge: document.getElementById('status-badge'),
+      statusText: document.getElementById('status-text'),
+      liveDot: document.getElementById('live-dot'),
+      lastUpdate: document.getElementById('last-update'),
+      dataPoints: document.getElementById('data-points'),
+      debugOutput: document.getElementById('debug-output'),
+      voltageFiltered: document.getElementById('voltage-filtered'),
+      lightLux: document.getElementById('light-lux'),
+      current: document.getElementById('current'),
+      power: document.getElementById('power'),
+      soc: document.getElementById('soc'),
+      status: document.getElementById('status'),
+      temp: document.getElementById('temp'),
+      humidity: document.getElementById('humidity'),
+      protoTemp: document.getElementById('proto-temp'),
+      protoHumidity: document.getElementById('proto-humidity'),
+      goodReadings: document.getElementById('good-readings'),
+      badReadings: document.getElementById('bad-readings'),
+      batteryChartCanvas: document.getElementById('battery-chart'),
+      powerChartCanvas: document.getElementById('power-chart'),
+      nmcAmbientChartCanvas: document.getElementById('nmc90-ambient-chart'),
+      solarChartCanvas: document.getElementById('solar-chart'),
+      timeRangeSelect: document.getElementById('time-range-select'),
+      refreshBtn: document.getElementById('refresh-btn'),
+      errorContainer: document.getElementById('error-container'),
+      successContainer: document.getElementById('success-container')
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeCharts();
+      setupEventListeners();
+      fetchData();
+      updateInterval = setInterval(fetchData, 5000);
+    });
+
+    function setupEventListeners(){
+      ui.timeRangeSelect?.addEventListener('change', e => { currentTimeRange = e.target.value; fetchData(); });
+      ui.refreshBtn?.addEventListener('click', () => { fetchData(); showSuccess('Data refreshed!'); });
+    }
+
+    function initializeCharts(){
+      const baseOpts = {
+        responsive:true, maintainAspectRatio:false, animation:false,
+        interaction:{mode:'index', intersect:false},
+        scales:{
+          x:{type:'time', time:{displayFormats:{minute:'HH:mm',hour:'HH:mm'}}, ticks:{color:'#6c757d',font:{size:9},maxTicksLimit:8}, grid:{display:false}, border:{display:false}},
+          y:{ticks:{color:'#6c757d',font:{size:9},maxTicksLimit:6}, grid:{display:false}, border:{display:false}, grace:'5%'},
+          y1:{position:'right', ticks:{color:'#6c757d',font:{size:9},maxTicksLimit:6}, grid:{display:false}, border:{display:false}, grace:'5%'}
+        },
+        plugins:{legend:{labels:{color:'#343a40',font:{size:10,weight:600},boxWidth:12,padding:10}}, tooltip:{backgroundColor:'rgba(0,0,0,.75)',titleColor:'#fff',bodyColor:'#fff'}}
+      };
+      const lineOpts = {fill:false,tension:0,borderWidth:0,pointRadius:2,pointHoverRadius:4,spanGaps:false,showLine:false};
+
+      charts.battery = new Chart(ui.batteryChartCanvas,{
+        type:'line',
+        data:{datasets:[
+          {label:'Battery Voltage (V)', data:[], borderColor:'#198754', backgroundColor:'#198754', yAxisID:'y', ...lineOpts},
+          {label:'State of Charge (%)', data:[], borderColor:'#6f42c1', backgroundColor:'#6f42c1', yAxisID:'y1', ...lineOpts}
+        ]},
+        options:{...baseOpts, scales:{x:baseOpts.scales.x, y:{...baseOpts.scales.y, position:'left'}, y1:{...baseOpts.scales.y1, min:0, max:100}}}
+      });
+
+      charts.power = new Chart(ui.powerChartCanvas,{
+        type:'line',
+        data:{datasets:[
+          {label:'Current (mA)', data:[], borderColor:'#28a745', backgroundColor:'#28a745', yAxisID:'y', ...lineOpts},
+          {label:'Power (W)', data:[], borderColor:'#dc3545', backgroundColor:'#dc3545', yAxisID:'y1', ...lineOpts}
+        ]},
+        options: baseOpts
+      });
+
+      // Bottom-left: NMC90 ambient from nmc90_power_data
+      charts.nmcAmbient = new Chart(ui.nmcAmbientChartCanvas,{
+        type:'line',
+        data:{datasets:[
+          {label:'NMC90 Ambient Temp (°C)', data:[], borderColor:'#ff6b35', backgroundColor:'#ff6b35', yAxisID:'y', ...lineOpts},
+          {label:'NMC90 Ambient Humidity (%)', data:[], borderColor:'#4ecdc4', backgroundColor:'#4ecdc4', yAxisID:'y1', ...lineOpts}
+        ]},
+        options: baseOpts
+      });
+
+      // Bottom-right: Environment ambient + lightlux from environment_data
+      charts.solar = new Chart(ui.solarChartCanvas,{
+        type:'line',
+        data:{datasets:[
+          {label:'Solar Light (lux)', data:[], borderColor:'#ffc107', backgroundColor:'#ffc107', yAxisID:'y', ...lineOpts},
+          {label:'Env Ambient Temp (°C)', data:[], borderColor:'#fd7e14', backgroundColor:'#fd7e14', yAxisID:'y1', ...lineOpts},
+          {label:'Env Ambient Humidity (%)', data:[], borderColor:'#0dcaf0', backgroundColor:'#0dcaf0', yAxisID:'y1', ...lineOpts}
+        ]},
+        options: baseOpts
+      });
+    }
+
+    function getTimeRangeQuery(){
+      const ranges={ '5m':'range(start: -5m)','15m':'range(start: -15m)','30m':'range(start: -30m)','1h':'range(start: -1h)','3h':'range(start: -3h)','6h':'range(start: -6h)','12h':'range(start: -12h)','24h':'range(start: -24h)','7d':'range(start: -7d)' };
+      return ranges[currentTimeRange] || ranges['1h'];
+    }
+
+    async function fetchData(){
+      if(isUpdating) return;
+      isUpdating = true;
+      let ok = false;
+      try{
+        const timeRange = getTimeRangeQuery();
+        const query = `
+          from(bucket: "${config.bucket}")
+            |> ${timeRange}
+            |> filter(fn: (r) => r["_measurement"] == "nmc90_power_data" or r["_measurement"] == "environment_data")
+            |> aggregateWindow(every: 1m, fn: mean, createEmpty: false)
+            |> sort(columns: ["_time"])
+        `;
+        const res = await fetch(\`${config.url}/api/v2/query?org=\${encodeURIComponent(config.org)}\`,{
+          method:'POST',
+          headers:{'Authorization':\`Token ${config.token}\`,'Content-Type':'application/vnd.flux','Accept':'application/csv'},
+          body:query
         });
+        if(!res.ok){ throw new Error(\`HTTP \${res.status}: \${await res.text()}\`); }
+        const csv = await res.text();
+        processData(csv);
+        ok = true; clearError();
+      } catch(e){ showError(\`Connection error: \${e.message}\`); }
+      finally { updateStatus(ok); isUpdating=false; }
+    }
 
-        function setupEventListeners() {
-            ui.timeRangeSelect?.addEventListener('change', (e) => {
-                currentTimeRange = e.target.value;
-                fetchData();
-            });
-            ui.refreshBtn?.addEventListener('click', () => {
-                fetchData();
-                showSuccess('Data refreshed!');
-            });
-        }
+    function processData(csv){
+      const lines = csv.trim().split('\n');
 
-        function initializeCharts() {
-            const chartOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: false,
-                interaction: { mode: 'index', intersect: false },
-                scales: {
-                    x: {
-                        type: 'time',
-                        time: { displayFormats: { minute: 'HH:mm', hour: 'HH:mm' } },
-                        ticks: { color: '#6c757d', font: { size: 9 }, maxTicksLimit: 8 },
-                        grid: { display: false },
-                        border: { display: false }
-                    },
-                    y: {
-                        ticks: { color: '#6c757d', font: { size: 9 }, maxTicksLimit: 6 },
-                        grid: { display: false },
-                        border: { display: false },
-                        grace: '5%'
-                    },
-                    y1: {
-                        position: 'right',
-                        ticks: { color: '#6c757d', font: { size: 9 }, maxTicksLimit: 6 },
-                        grid: { display: false },
-                        border: { display: false },
-                        grace: '5%'
-                    }
-                },
-                plugins: {
-                    legend: { labels: { color: '#343a40', font: { size: 10, weight: 600 }, boxWidth: 12, padding: 10 } },
-                    tooltip: { backgroundColor: 'rgba(0, 0, 0, 0.75)', titleColor: '#fff', bodyColor: '#fff' }
-                }
-            };
+      const fieldsMeasurements = new Set();
+      const latestValues = {};
 
-            const lineOpts = { fill: false, tension: 0, borderWidth: 0, pointRadius: 2, pointHoverRadius: 4, spanGaps: false, showLine: false };
+      const timeSeries = {
+        battery_voltage: [],
+        state_of_charge: [],
+        load_current: [],
+        load_power: [],
+        light_lux: [],
+        // Split sources:
+        nmc90_temp: [],
+        nmc90_humidity: [],
+        env_temp: [],
+        env_humidity: []
+      };
 
-            Object.values(charts).forEach(chart => chart?.destroy());
+      let dataCount = 0;
 
-            charts.battery = new Chart(ui.batteryChartCanvas, {
-                type: 'line',
-                data: {
-                    datasets: [
-                        { label: 'Battery Voltage (V)', data: [], borderColor: '#198754', backgroundColor: '#198754', yAxisID: 'y', ...lineOpts },
-                        { label: 'State of Charge (%)', data: [], borderColor: '#6f42c1', backgroundColor: '#6f42c1', yAxisID: 'y1', ...lineOpts }
-                    ]
-                },
-                options: { ...chartOptions, scales: { x: chartOptions.scales.x, y: { ...chartOptions.scales.y, position: 'left' }, y1: { ...chartOptions.scales.y1, min: 0, max: 100 } } }
-            });
+      for (let i=0;i<lines.length;i++){
+        const line = lines[i].trim();
+        if(!line || line.startsWith('#') || line.startsWith(',result') || line.includes('_start,_stop')) continue;
 
-            charts.power = new Chart(ui.powerChartCanvas, {
-                type: 'line',
-                data: {
-                    datasets: [
-                        { label: 'Current (mA)', data: [], borderColor: '#28a745', backgroundColor: '#28a745', yAxisID: 'y', ...lineOpts },
-                        { label: 'Power (W)', data: [], borderColor: '#dc3545', backgroundColor: '#dc3545', yAxisID: 'y1', ...lineOpts }
-                    ]
-                },
-                options: chartOptions
-            });
+        const parts = line.split(',');
+        if(parts.length < 9) continue;
 
-            charts.proto = new Chart(ui.protoChartCanvas, {
-                type: 'line',
-                data: {
-                    datasets: [
-                        { label: 'Prototype Temp (°C)', data: [], borderColor: '#ff6b35', backgroundColor: '#ff6b35', yAxisID: 'y', ...lineOpts },
-                        { label: 'Prototype Humidity (%)', data: [], borderColor: '#4ecdc4', backgroundColor: '#4ecdc4', yAxisID: 'y1', ...lineOpts }
-                    ]
-                },
-                options: chartOptions
-            });
+        const timeStr = parts[5]?.trim();
+        const valueStr = parts[6]?.trim();
+        const field = parts[7]?.trim();
+        const measurement = parts[8]?.trim();
 
-            charts.solar = new Chart(ui.solarChartCanvas, {
-                type: 'line',
-                data: {
-                    datasets: [
-                        { label: 'Solar Light (lux)', data: [], borderColor: '#ffc107', backgroundColor: '#ffc107', yAxisID: 'y', ...lineOpts },
-                        { label: 'Ambient Temp (°C)', data: [], borderColor: '#fd7e14', backgroundColor: '#fd7e14', yAxisID: 'y1', ...lineOpts },
-                        { label: 'Ambient Humidity (%)', data: [], borderColor: '#0dcaf0', backgroundColor: '#0dcaf0', yAxisID: 'y1', ...lineOpts }
-                    ]
-                },
-                options: chartOptions
-            });
+        if(!timeStr || !valueStr || !field || !measurement) continue;
 
-            console.log('✅ Charts initialized');
-        }
+        const t = new Date(timeStr);
+        const v = parseFloat(valueStr);
+        if(isNaN(t.getTime()) || isNaN(v)) continue;
 
-        function getTimeRangeQuery() {
-            const ranges = {
-                '5m': 'range(start: -5m)',
-                '15m': 'range(start: -15m)',
-                '30m': 'range(start: -30m)',
-                '1h': 'range(start: -1h)',
-                '3h': 'range(start: -3h)',
-                '6h': 'range(start: -6h)',
-                '12h': 'range(start: -12h)',
-                '24h': 'range(start: -24h)',
-                '7d': 'range(start: -7d)'
-            };
-            return ranges[currentTimeRange] || ranges['1h'];
-        }
+        fieldsMeasurements.add(\`\${measurement} → \${field}\`);
 
-        async function fetchData() {
-            if (isUpdating) return;
-            isUpdating = true;
-            console.log(`\n🔍 ===== DIAGNOSTIC FETCH [${new Date().toLocaleTimeString()}] =====`);
-            
-            let fetchSuccessful = false;
+        // latest
+        latestValues[\`\${field}_\${measurement}\`] = v;
+        latestValues[field] = v;
 
-            try {
-                const timeRange = getTimeRangeQuery();
+        // time series routing
+        if(field === 'battery_voltage') timeSeries.battery_voltage.push({x:t,y:v});
+        else if(field === 'state_of_charge') timeSeries.state_of_charge.push({x:t,y:v});
+        else if(field === 'load_current') timeSeries.load_current.push({x:t,y:v});
+        else if(field === 'load_power') timeSeries.load_power.push({x:t,y:v});
+        else if(field === 'light_lux') timeSeries.light_lux.push({x:t,y:v});
+        else if(field === 'ambient_temp' && measurement === 'nmc90_power_data') timeSeries.nmc90_temp.push({x:t,y:v});
+        else if(field === 'ambient_humidity' && measurement === 'nmc90_power_data') timeSeries.nmc90_humidity.push({x:t,y:v});
+        else if(field === 'ambient_temp' && measurement === 'environment_data') timeSeries.env_temp.push({x:t,y:v});
+        else if(field === 'ambient_humidity' && measurement === 'environment_data') timeSeries.env_humidity.push({x:t,y:v});
 
-                // Simple query - just get ALL the data
-                const query = `
-                    from(bucket: "${config.bucket}")
-                      |> ${timeRange}
-                      |> filter(fn: (r) => 
-                            r["_measurement"] == "nmc90_power_data" or
-                            r["_measurement"] == "environment_data"
-                         )
-                      |> aggregateWindow(every: 1m, fn: mean, createEmpty: false)
-                      |> sort(columns: ["_time"])
-                `;
+        dataCount++;
+      }
 
-                console.log('📤 Sending query to InfluxDB...');
+      // Cards (prefer nmc90 values when present)
+      const ambientTemp = latestValues['ambient_temp_nmc90_power_data'] ?? latestValues['ambient_temp'];
+      const ambientHum  = latestValues['ambient_humidity_nmc90_power_data'] ?? latestValues['ambient_humidity'];
 
-                const response = await fetch(`${config.url}/api/v2/query?org=${encodeURIComponent(config.org)}`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Token ${config.token}`,
-                        'Content-Type': 'application/vnd.flux',
-                        'Accept': 'application/csv'
-                    },
-                    body: query
-                });
+      updateValue(ui.voltageFiltered,'card-voltage-filtered',latestValues['battery_voltage'],3,'V');
+      updateValue(ui.current,'card-current',latestValues['load_current'],0,'mA');
+      updateValue(ui.power,'card-power',latestValues['load_power'],2,'W');
+      updateValue(ui.soc,'card-soc',latestValues['state_of_charge'],1,'%');
 
-                if (!response.ok) {
-                    const errorBody = await response.text();
-                    console.error('❌ Query error:', errorBody);
-                    throw new Error(`HTTP ${response.status}: ${errorBody}`);
-                }
+      const luxValue = latestValues['light_lux'];
+      if(luxValue!==undefined && !isNaN(luxValue)){
+        if(luxValue >= 1000) updateValue(ui.lightLux,'card-light-lux',luxValue/1000,1,'klx');
+        else updateValue(ui.lightLux,'card-light-lux',luxValue,0,'lux');
+      }
+      updateValue(ui.temp,'card-temp',ambientTemp,1,'°C');
+      updateValue(ui.humidity,'card-humidity',ambientHum,0,'%');
 
-                const csv = await response.text();
-                console.log('📥 Response received, length:', csv.length);
-                
-                // Log first 10 lines to console
-                const firstLines = csv.split('\n').slice(0, 10).join('\n');
-                console.log('📋 First 10 lines of CSV:\n' + firstLines);
+      // optional prototype cards kept as-is (from environment_data if you use them)
+      updateValue(ui.protoTemp,'card-proto-temp',latestValues['ambient_temp_environment_data'],1,'°C');
+      updateValue(ui.protoHumidity,'card-proto-humidity',latestValues['ambient_humidity_environment_data'],0,'%');
 
-                processData(csv);
+      updateValue(ui.badReadings,'card-bad',latestValues['bad_readings_total'],0,'');
+      updateValue(ui.goodReadings,'card-good',Math.max(0,dataCount-(latestValues['bad_readings_total']||0)),0,'');
 
-                fetchSuccessful = true;
-                clearError();
+      // Status
+      let status='IDLE', statusClass='status-idle';
+      if(latestValues['is_charging']===1){ status='CHARGING'; statusClass='status-charging'; }
+      else if(latestValues['is_discharging']===1){ status='DISCHARGING'; statusClass='status-discharging'; }
+      ui.status.textContent=status; ui.status.className=statusClass;
 
-            } catch (error) {
-                console.error('❌ Fetch error:', error);
-                showError(`Connection error: ${error.message}`);
-            } finally {
-                updateStatus(fetchSuccessful);
-                isUpdating = false;
-            }
-        }
+      ui.dataPoints.textContent=dataCount;
 
-        function processData(csv) {
-            console.log('🔄 Processing data...');
-            
-            const lines = csv.trim().split('\n');
-            console.log(`📊 Total lines in CSV: ${lines.length}`);
+      // Update charts
+      if(charts.battery){
+        charts.battery.data.datasets[0].data = timeSeries.battery_voltage;
+        charts.battery.data.datasets[1].data = timeSeries.state_of_charge;
+        charts.battery.update('none');
+      }
+      if(charts.power){
+        charts.power.data.datasets[0].data = timeSeries.load_current;
+        charts.power.data.datasets[1].data = timeSeries.load_power;
+        charts.power.update('none');
+      }
+      if(charts.nmcAmbient){
+        charts.nmcAmbient.data.datasets[0].data = timeSeries.nmc90_temp;
+        charts.nmcAmbient.data.datasets[1].data = timeSeries.nmc90_humidity;
+        charts.nmcAmbient.update('none');
+      }
+      if(charts.solar){
+        charts.solar.data.datasets[0].data = timeSeries.light_lux;
+        charts.solar.data.datasets[1].data = timeSeries.env_temp;
+        charts.solar.data.datasets[2].data = timeSeries.env_humidity;
+        charts.solar.update('none');
+      }
+    }
 
-            // Find all unique fields and measurements
-            const fieldsMeasurements = new Set();
-            const latestValues = {};
-            
-            const timeSeries = {
-                battery_voltage: [],
-                light_lux: [],
-                load_current: [],
-                load_power: [],
-                state_of_charge: [],
-                ambient_temp: [],
-                ambient_humidity: [],
-                proto_temp: [],
-                proto_humidity: []
-            };
+    function updateValue(el, cardId, value, decimals, unit){
+      if(!el) return;
+      const formatted = (value!==undefined && value!==null && !isNaN(value)) ? Number(value).toFixed(decimals) : '--';
+      el.textContent = formatted;
+      const unitEl = el.nextElementSibling;
+      if(unitEl && unitEl.classList.contains('metric-unit')) unitEl.textContent = unit;
+    }
 
-            let dataCount = 0;
+    function updateStatus(connected){
+      if(!ui.statusBadge||!ui.statusText||!ui.liveDot||!ui.lastUpdate) return;
+      if(connected){
+        ui.statusBadge.className='status-badge status-connected';
+        ui.statusText.textContent='Connected';
+        ui.liveDot.style.display='inline-block';
+        ui.lastUpdate.textContent=new Date().toLocaleTimeString();
+      }else{
+        ui.statusBadge.className='status-badge status-disconnected';
+        ui.statusText.textContent='Disconnected';
+        ui.liveDot.style.display='none';
+        ui.lastUpdate.textContent='Connection lost';
+      }
+    }
 
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i].trim();
-                
-                // Skip empty lines, comments, and header lines
-                if (!line || line.startsWith('#') || line.startsWith(',result') || line.includes('_start,_stop')) {
-                    continue;
-                }
+    let errorTimeout, successTimeout;
+    function showError(message){ clearTimeout(successTimeout); clearError(); if(ui.errorContainer){ ui.errorContainer.innerHTML = `<div class="error-message">❌ ${message}</div>`; } errorTimeout=setTimeout(clearError,6000); }
+    function clearError(){ clearTimeout(errorTimeout); if(ui.errorContainer) ui.errorContainer.innerHTML=''; }
+    function showSuccess(message){ clearTimeout(errorTimeout); clearSuccess(); if(ui.successContainer){ ui.successContainer.innerHTML = `<div class="success-message">✅ ${message}</div>`; } successTimeout=setTimeout(clearSuccess,3500); }
+    function clearSuccess(){ clearTimeout(successTimeout); if(ui.successContainer) ui.successContainer.innerHTML=''; }
 
-                const parts = line.split(',');
-                if (parts.length < 9) continue;
-
-                // Try to find _measurement, _field, _time, _value
-                // The CSV format can vary, so let's be flexible
-                let measurement, field, timeStr, valueStr;
-
-                // Common format: ,result,table,_start,_stop,_time,_value,_field,_measurement
-                if (parts.length >= 9) {
-                    timeStr = parts[5]?.trim();
-                    valueStr = parts[6]?.trim();
-                    field = parts[7]?.trim();
-                    measurement = parts[8]?.trim();
-                }
-
-                if (!timeStr || !valueStr || !field || !measurement) continue;
-
-                const time = new Date(timeStr);
-                const value = parseFloat(valueStr);
-
-                if (isNaN(time.getTime()) || isNaN(value)) continue;
-
-                // Track what we're finding
-                fieldsMeasurements.add(`${measurement} → ${field}`);
-
-                // Store latest value
-                const key = `${field}_${measurement}`;
-                latestValues[key] = value;
-                latestValues[field] = value; // Also store without measurement suffix
-
-                // Store time series
-                if (timeSeries.hasOwnProperty(field)) {
-                    timeSeries[field].push({ x: time, y: value });
-                } else if (field === 'ambient_temp' && measurement === 'environment_data') {
-                    timeSeries.proto_temp.push({ x: time, y: value });
-                } else if (field === 'ambient_humidity' && measurement === 'environment_data') {
-                    timeSeries.proto_humidity.push({ x: time, y: value });
-                }
-
-                dataCount++;
-            }
-
-            console.log(`✅ Parsed ${dataCount} data points`);
-            console.log('📊 Fields and Measurements found:');
-            fieldsMeasurements.forEach(fm => console.log(`   - ${fm}`));
-            console.log('💾 Latest values:', latestValues);
-
-            // Update debug panel
-            let debugText = `Found ${dataCount} data points\n\n`;
-            debugText += `Fields & Measurements:\n`;
-            fieldsMeasurements.forEach(fm => debugText += `  • ${fm}\n`);
-            debugText += `\nLatest Values:\n`;
-            Object.entries(latestValues).forEach(([k, v]) => debugText += `  • ${k}: ${v.toFixed(2)}\n`);
-            ui.debugOutput.textContent = debugText;
-
-            // Update cards
-            updateValue(ui.voltageFiltered, 'card-voltage-filtered', latestValues['battery_voltage'], 3, 'V');
-            updateValue(ui.current, 'card-current', latestValues['load_current'], 0, 'mA');
-            updateValue(ui.power, 'card-power', latestValues['load_power'], 2, 'W');
-            updateValue(ui.soc, 'card-soc', latestValues['state_of_charge'], 1, '%');
-            
-            const luxValue = latestValues['light_lux'];
-            if (luxValue !== undefined && !isNaN(luxValue)) {
-                if (luxValue >= 1000) {
-                    updateValue(ui.lightLux, 'card-light-lux', luxValue / 1000, 1, 'klx');
-                } else {
-                    updateValue(ui.lightLux, 'card-light-lux', luxValue, 0, 'lux');
-                }
-            }
-
-            // Try both keys for ambient data
-            const ambientTemp = latestValues['ambient_temp_nmc90_power_data'] || latestValues['ambient_temp'];
-            const ambientHum = latestValues['ambient_humidity_nmc90_power_data'] || latestValues['ambient_humidity'];
-            const protoTemp = latestValues['ambient_temp_environment_data'];
-            const protoHum = latestValues['ambient_humidity_environment_data'];
-
-            updateValue(ui.temp, 'card-temp', ambientTemp, 1, '°C');
-            updateValue(ui.humidity, 'card-humidity', ambientHum, 0, '%');
-            updateValue(ui.protoTemp, 'card-proto-temp', protoTemp, 1, '°C');
-            updateValue(ui.protoHumidity, 'card-proto-humidity', protoHum, 0, '%');
-
-            updateValue(ui.badReadings, 'card-bad', latestValues['bad_readings_total'], 0, '');
-            updateValue(ui.goodReadings, 'card-good', Math.max(0, dataCount - (latestValues['bad_readings_total'] || 0)), 0, '');
-
-            // Status
-            let status = 'IDLE', statusClass = 'status-idle';
-            if (latestValues['is_charging'] === 1) {
-                status = 'CHARGING';
-                statusClass = 'status-charging';
-            } else if (latestValues['is_discharging'] === 1) {
-                status = 'DISCHARGING';
-                statusClass = 'status-discharging';
-            }
-            ui.status.textContent = status;
-            ui.status.className = statusClass;
-
-            ui.dataPoints.textContent = dataCount;
-
-            // Update charts
-            if (charts.battery) {
-                charts.battery.data.datasets[0].data = timeSeries.battery_voltage;
-                charts.battery.data.datasets[1].data = timeSeries.state_of_charge;
-                charts.battery.update('none');
-            }
-
-            if (charts.power) {
-                charts.power.data.datasets[0].data = timeSeries.load_current;
-                charts.power.data.datasets[1].data = timeSeries.load_power;
-                charts.power.update('none');
-            }
-
-            if (charts.proto) {
-                charts.proto.data.datasets[0].data = timeSeries.proto_temp;
-                charts.proto.data.datasets[1].data = timeSeries.proto_humidity;
-                charts.proto.update('none');
-            }
-
-            if (charts.solar) {
-                charts.solar.data.datasets[0].data = timeSeries.light_lux;
-                charts.solar.data.datasets[1].data = timeSeries.ambient_temp;
-                charts.solar.data.datasets[2].data = timeSeries.ambient_humidity;
-                charts.solar.update('none');
-            }
-
-            console.log('✅ Update complete!');
-        }
-
-        function updateValue(element, cardId, value, decimals, unit) {
-            if (!element) return;
-            const formatted = (value !== undefined && value !== null && !isNaN(value)) ? Number(value).toFixed(decimals) : '--';
-            element.textContent = formatted;
-            const unitEl = element.nextElementSibling;
-            if (unitEl && unitEl.classList.contains('metric-unit')) {
-                unitEl.textContent = unit;
-            }
-        }
-
-        function updateStatus(connected) {
-            if (!ui.statusBadge || !ui.statusText || !ui.liveDot || !ui.lastUpdate) return;
-            if (connected) {
-                ui.statusBadge.className = 'status-badge status-connected';
-                ui.statusText.textContent = 'Connected';
-                ui.liveDot.style.display = 'inline-block';
-                ui.lastUpdate.textContent = new Date().toLocaleTimeString();
-            } else {
-                ui.statusBadge.className = 'status-badge status-disconnected';
-                ui.statusText.textContent = 'Disconnected';
-                ui.liveDot.style.display = 'none';
-                ui.lastUpdate.textContent = 'Connection lost';
-            }
-        }
-
-        let errorTimeout, successTimeout;
-
-        function showError(message) {
-            clearTimeout(successTimeout);
-            clearError();
-            if (ui.errorContainer) {
-                ui.errorContainer.innerHTML = `<div class="error-message">❌ ${message}</div>`;
-            }
-            errorTimeout = setTimeout(clearError, 6000);
-        }
-
-        function clearError() {
-            clearTimeout(errorTimeout);
-            if (ui.errorContainer) ui.errorContainer.innerHTML = '';
-        }
-
-        function showSuccess(message) {
-            clearTimeout(errorTimeout);
-            clearSuccess();
-            if (ui.successContainer) {
-                ui.successContainer.innerHTML = `<div class="success-message">✅ ${message}</div>`;
-            }
-            successTimeout = setTimeout(clearSuccess, 3500);
-        }
-
-        function clearSuccess() {
-            clearTimeout(successTimeout);
-            if (ui.successContainer) ui.successContainer.innerHTML = '';
-        }
-
-        window.addEventListener('beforeunload', () => {
-            if (updateInterval) clearInterval(updateInterval);
-        });
-    </script>
+    window.addEventListener('beforeunload',()=>{ if(updateInterval) clearInterval(updateInterval); });
+  </script>
 </body>
 </html>
