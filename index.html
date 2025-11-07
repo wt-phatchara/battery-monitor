@@ -248,7 +248,7 @@
                 </div>
             </div>
             <div class="chart-container">
-                <div class="chart-title">🌡️ Environmental Conditions</div>
+                <div class="chart-title">🌡️ Environmental Conditions (Battery & Solar)</div>
                 <div class="chart-canvas">
                     <canvas id="env-chart"></canvas>
                 </div>
@@ -257,7 +257,7 @@
 
         <!-- Footer -->
         <div class="footer">
-            <p>Powered by CEST VISTEC Battery Technology Solutions | Dual-Query Architecture v2.0</p>
+            <p>Powered by CEST VISTEC Battery Technology Solutions | Dual-Query Architecture v2.1</p>
             <p><a href="https://github.com/influxdata/influxdb" target="_blank" style="color: #6c757d;">Built with InfluxDB</a> & <a href="https://www.chartjs.org/" target="_blank" style="color: #6c757d;">Chart.js</a></p>
         </div>
     </div>
@@ -605,18 +605,34 @@
                 data: {
                     datasets: [
                         {
-                            label: 'Temperature (°C)',
+                            label: 'Temp - Battery (°C)',
                             data: [],
-                            borderColor: colorTemp,
-                            backgroundColor: colorTemp,
+                            borderColor: '#fd7e14',
+                            backgroundColor: '#fd7e14',
                             yAxisID: 'y',
                             ...defaultLineOptions
                         },
                         {
-                            label: 'Humidity (%)',
+                            label: 'Temp - Solar (°C)',
                             data: [],
-                            borderColor: colorHumidity,
-                            backgroundColor: colorHumidity,
+                            borderColor: '#ff6b35',
+                            backgroundColor: '#ff6b35',
+                            yAxisID: 'y',
+                            ...defaultLineOptions
+                        },
+                        {
+                            label: 'Humidity - Battery (%)',
+                            data: [],
+                            borderColor: '#0dcaf0',
+                            backgroundColor: '#0dcaf0',
+                            yAxisID: 'y1',
+                            ...defaultLineOptions
+                        },
+                        {
+                            label: 'Humidity - Solar (%)',
+                            data: [],
+                            borderColor: '#4ecdc4',
+                            backgroundColor: '#4ecdc4',
                             yAxisID: 'y1',
                             ...defaultLineOptions
                         }
@@ -626,8 +642,16 @@
                     ...chartOptions,
                     scales: {
                         ...chartOptions.scales,
-                        y: { ...chartOptions.scales.y, position: 'left' },
-                        y1: { ...chartOptions.scales.y1, position: 'right' }
+                        y: { 
+                            ...chartOptions.scales.y, 
+                            position: 'left',
+                            title: { display: true, text: 'Temperature (°C)', color: '#6c757d', font: { size: 10 } }
+                        },
+                        y1: { 
+                            ...chartOptions.scales.y1, 
+                            position: 'right',
+                            title: { display: true, text: 'Humidity (%)', color: '#6c757d', font: { size: 10 } }
+                        }
                     }
                 }
             });
@@ -671,7 +695,7 @@
 
                 console.log(`📊 Aggregation: ${requiresAggregation ? aggregateInterval : '2s dedup'} (Chart: mean, Card: last)`);
                 // ============================================================
-                // STEP 2: Build base query (FIXED - removed battery_type filter!)
+                // STEP 2: Build base query - SEPARATE battery and environment sensors!
                 // ============================================================
                 const baseQuery = `
                     from(bucket: "${config.bucket}")
@@ -812,7 +836,7 @@
             console.log(`📊 PROCESSING DUAL-QUERY DATA... (Aggregated: ${isAggregated})`);
 
             // ================================================================
-            // PART 1: Process CHART data (last values, deduplicated)
+            // PART 1: Process CHART data - SEPARATE battery vs solar environmental
             // ================================================================
             const chartLines = chartCSV.trim().split('\n');
             const chartTimeSeries = {
@@ -821,8 +845,10 @@
                 load_current: [],
                 load_power: [],
                 state_of_charge: [],
-                ambient_temp: [],
-                ambient_humidity: []
+                ambient_temp_battery: [],      // From battery monitor
+                ambient_humidity_battery: [],  // From battery monitor
+                ambient_temp_solar: [],        // From light sensor
+                ambient_humidity_solar: []     // From light sensor
             };
 
             let chartDataPoints = 0;
@@ -837,6 +863,7 @@
                 const parts = line.split(',');
                 if (parts.length < 8) continue;
 
+                const measurement = parts[3]?.trim();  // Get measurement name
                 const timeStr = parts[5]?.trim();
                 const valueStr = parts[6]?.trim();
                 const field = parts[7]?.trim();
@@ -848,13 +875,28 @@
 
                 if (isNaN(time.getTime()) || isNaN(value)) continue;
 
-                if (chartTimeSeries.hasOwnProperty(field)) {
+                // Route data based on measurement and field
+                if (field === "ambient_temp") {
+                    if (measurement === "nmc90_power_data") {
+                        chartTimeSeries.ambient_temp_battery.push({ x: time, y: value });
+                    } else if (measurement === "environment_data") {
+                        chartTimeSeries.ambient_temp_solar.push({ x: time, y: value });
+                    }
+                    chartDataPoints++;
+                } else if (field === "ambient_humidity") {
+                    if (measurement === "nmc90_power_data") {
+                        chartTimeSeries.ambient_humidity_battery.push({ x: time, y: value });
+                    } else if (measurement === "environment_data") {
+                        chartTimeSeries.ambient_humidity_solar.push({ x: time, y: value });
+                    }
+                    chartDataPoints++;
+                } else if (chartTimeSeries.hasOwnProperty(field)) {
                     chartTimeSeries[field].push({ x: time, y: value });
                     chartDataPoints++;
                 }
             }
 
-            console.log(`📈 Chart data: ${chartDataPoints} points (last values, deduplicated)`);
+            console.log(`📈 Chart data: ${chartDataPoints} points (separated by sensor location)`);
 
             // ================================================================
             // PART 2: Process CARD data (latest, accurate)
@@ -972,13 +1014,15 @@
             }
 
             if (charts.env) {
-                charts.env.data.datasets[0].data = chartTimeSeries.ambient_temp;
-                charts.env.data.datasets[1].data = chartTimeSeries.ambient_humidity;
+                charts.env.data.datasets[0].data = chartTimeSeries.ambient_temp_battery;
+                charts.env.data.datasets[1].data = chartTimeSeries.ambient_temp_solar;
+                charts.env.data.datasets[2].data = chartTimeSeries.ambient_humidity_battery;
+                charts.env.data.datasets[3].data = chartTimeSeries.ambient_humidity_solar;
                 charts.env.update('none');
             }
 
             console.log(`✅ DUAL-QUERY UPDATE COMPLETE!`);
-            console.log(`   📊 Charts: ${chartDataPoints} points (last values)`);
+            console.log(`   📊 Charts: ${chartDataPoints} points (separated by location)`);
             console.log(`   💳 Cards: Latest values (last values)`);
         }
 
