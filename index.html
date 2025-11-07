@@ -242,12 +242,12 @@
             </div>
         </div>
 
-        <!-- Charts -->
+        <!-- Charts - REORDERED: Battery chart moved to top-left -->
         <div class="charts">
             <div class="chart-container">
-                <div class="chart-title">☀️ Solar Light & Ambient Conditions</div>
+                <div class="chart-title">🔋 Battery Voltage & State of Charge</div>
                 <div class="chart-canvas">
-                    <canvas id="solar-chart"></canvas>
+                    <canvas id="battery-chart"></canvas>
                 </div>
             </div>
             <div class="chart-container">
@@ -263,16 +263,16 @@
                 </div>
             </div>
             <div class="chart-container">
-                <div class="chart-title">🔋 Battery Voltage & State of Charge</div>
+                <div class="chart-title">☀️ Solar Light & Ambient Conditions</div>
                 <div class="chart-canvas">
-                    <canvas id="battery-chart"></canvas>
+                    <canvas id="solar-chart"></canvas>
                 </div>
             </div>
         </div>
 
         <!-- Footer -->
         <div class="footer">
-            <p>Powered by CEST VISTEC Battery Technology Solutions | Dual-Query Architecture v2.2</p>
+            <p>Powered by CEST VISTEC Battery Technology Solutions | Dual-Query Architecture v2.3</p>
             <p><a href="https://github.com/influxdata/influxdb" target="_blank" style="color: #6c757d;">Built with InfluxDB</a> & <a href="https://www.chartjs.org/" target="_blank" style="color: #6c757d;">Chart.js</a></p>
         </div>
     </div>
@@ -300,10 +300,10 @@
         let rawDataCache = [];
 
         const charts = {
-            solar: null,
+            battery: null,
             power: null,
             proto: null,
-            battery: null
+            solar: null
         };
 
         const ui = {
@@ -328,11 +328,11 @@
             goodReadings: document.getElementById('good-readings'),
             badReadings: document.getElementById('bad-readings'),
             
-            // Chart canvases
-            solarChartCanvas: document.getElementById('solar-chart'),
+            // Chart canvases - reordered
+            batteryChartCanvas: document.getElementById('battery-chart'),
             powerChartCanvas: document.getElementById('power-chart'),
             protoChartCanvas: document.getElementById('proto-chart'),
-            batteryChartCanvas: document.getElementById('battery-chart'),
+            solarChartCanvas: document.getElementById('solar-chart'),
             
             // Controls
             timeRangeSelect: document.getElementById('time-range-select'),
@@ -507,32 +507,24 @@
 
             Object.values(charts).forEach(chart => chart?.destroy());
 
-            // Solar Light & Ambient Conditions Chart
-            charts.solar = new Chart(ui.solarChartCanvas, {
+            // Battery Voltage & SoC Chart - NOW FIRST
+            charts.battery = new Chart(ui.batteryChartCanvas, {
                 type: 'line',
                 data: {
                     datasets: [
                         {
-                            label: 'Solar Light (lux)',
+                            label: 'Battery Voltage (V)',
                             data: [],
-                            borderColor: '#ffc107',
-                            backgroundColor: '#ffc107',
+                            borderColor: '#198754',
+                            backgroundColor: '#198754',
                             yAxisID: 'y',
                             ...defaultLineOptions
                         },
                         {
-                            label: 'Ambient Temp (°C)',
+                            label: 'State of Charge (%)',
                             data: [],
-                            borderColor: '#fd7e14',
-                            backgroundColor: '#fd7e14',
-                            yAxisID: 'y1',
-                            ...defaultLineOptions
-                        },
-                        {
-                            label: 'Ambient Humidity (%)',
-                            data: [],
-                            borderColor: '#0dcaf0',
-                            backgroundColor: '#0dcaf0',
+                            borderColor: '#6f42c1',
+                            backgroundColor: '#6f42c1',
                             yAxisID: 'y1',
                             ...defaultLineOptions
                         }
@@ -543,21 +535,16 @@
                     scales: {
                         x: chartOptions.scales.x,
                         y: { 
-                            ...chartOptions.scales.y,
+                            ...chartOptions.scales.y, 
                             position: 'left',
-                            title: { display: true, text: 'Light (lux)', color: '#6c757d', font: { size: 10 } }
+                            title: { display: true, text: 'Voltage (V)', color: '#6c757d', font: { size: 10 } }
                         },
-                        y1: {
+                        y1: { 
+                            ...chartOptions.scales.y1, 
                             position: 'right',
-                            ticks: { 
-                                color: '#6c757d', 
-                                font: { size: 9 }, 
-                                maxTicksLimit: 6 
-                            },
-                            grid: { display: false },
-                            border: { display: false },
-                            grace: '5%',
-                            title: { display: true, text: 'Temp/Humidity', color: '#6c757d', font: { size: 10 } }
+                            min: 0,
+                            max: 100,
+                            title: { display: true, text: 'SoC (%)', color: '#6c757d', font: { size: 10 } }
                         }
                     }
                 }
@@ -637,24 +624,32 @@
                 }
             });
 
-            // Battery Voltage & SoC Chart
-            charts.battery = new Chart(ui.batteryChartCanvas, {
+            // Solar Light & Ambient Conditions Chart
+            charts.solar = new Chart(ui.solarChartCanvas, {
                 type: 'line',
                 data: {
                     datasets: [
                         {
-                            label: 'Battery Voltage (V)',
+                            label: 'Solar Light (lux)',
                             data: [],
-                            borderColor: '#198754',
-                            backgroundColor: '#198754',
+                            borderColor: '#ffc107',
+                            backgroundColor: '#ffc107',
                             yAxisID: 'y',
                             ...defaultLineOptions
                         },
                         {
-                            label: 'State of Charge (%)',
+                            label: 'Ambient Temp (°C)',
                             data: [],
-                            borderColor: '#6f42c1',
-                            backgroundColor: '#6f42c1',
+                            borderColor: '#fd7e14',
+                            backgroundColor: '#fd7e14',
+                            yAxisID: 'y1',
+                            ...defaultLineOptions
+                        },
+                        {
+                            label: 'Ambient Humidity (%)',
+                            data: [],
+                            borderColor: '#0dcaf0',
+                            backgroundColor: '#0dcaf0',
                             yAxisID: 'y1',
                             ...defaultLineOptions
                         }
@@ -665,16 +660,21 @@
                     scales: {
                         x: chartOptions.scales.x,
                         y: { 
-                            ...chartOptions.scales.y, 
+                            ...chartOptions.scales.y,
                             position: 'left',
-                            title: { display: true, text: 'Voltage (V)', color: '#6c757d', font: { size: 10 } }
+                            title: { display: true, text: 'Light (lux)', color: '#6c757d', font: { size: 10 } }
                         },
-                        y1: { 
-                            ...chartOptions.scales.y1, 
+                        y1: {
                             position: 'right',
-                            min: 0,
-                            max: 100,
-                            title: { display: true, text: 'SoC (%)', color: '#6c757d', font: { size: 10 } }
+                            ticks: { 
+                                color: '#6c757d', 
+                                font: { size: 9 }, 
+                                maxTicksLimit: 6 
+                            },
+                            grid: { display: false },
+                            border: { display: false },
+                            grace: '5%',
+                            title: { display: true, text: 'Temp/Humidity', color: '#6c757d', font: { size: 10 } }
                         }
                     }
                 }
@@ -852,7 +852,7 @@
         }
 
         // =============================================================================
-        // DUAL-QUERY DATA PROCESSING
+        // DUAL-QUERY DATA PROCESSING - FIXED DATA ROUTING
         // =============================================================================
         function processDualQueryData(chartCSV, cardCSV, isAggregated) {
             console.log(`📊 PROCESSING DUAL-QUERY DATA... (Aggregated: ${isAggregated})`);
@@ -867,10 +867,10 @@
                 load_current: [],
                 load_power: [],
                 state_of_charge: [],
-                ambient_temp_battery: [],      // From battery monitor
-                ambient_humidity_battery: [],  // From battery monitor
-                ambient_temp_solar: [],        // From light/prototype sensor
-                ambient_humidity_solar: []     // From light/prototype sensor
+                ambient_temp_battery: [],      // From battery monitor (nmc90_power_data)
+                ambient_humidity_battery: [],  // From battery monitor (nmc90_power_data)
+                ambient_temp_proto: [],        // From prototype sensor (environment_data)
+                ambient_humidity_proto: []     // From prototype sensor (environment_data)
             };
 
             let chartDataPoints = 0;
@@ -902,14 +902,14 @@
                     if (measurement === "nmc90_power_data") {
                         chartTimeSeries.ambient_temp_battery.push({ x: time, y: value });
                     } else if (measurement === "environment_data") {
-                        chartTimeSeries.ambient_temp_solar.push({ x: time, y: value });
+                        chartTimeSeries.ambient_temp_proto.push({ x: time, y: value });
                     }
                     chartDataPoints++;
                 } else if (field === "ambient_humidity") {
                     if (measurement === "nmc90_power_data") {
                         chartTimeSeries.ambient_humidity_battery.push({ x: time, y: value });
                     } else if (measurement === "environment_data") {
-                        chartTimeSeries.ambient_humidity_solar.push({ x: time, y: value });
+                        chartTimeSeries.ambient_humidity_proto.push({ x: time, y: value });
                     }
                     chartDataPoints++;
                 } else if (chartTimeSeries.hasOwnProperty(field)) {
@@ -918,10 +918,12 @@
                 }
             }
 
-            console.log(`📈 Chart data: ${chartDataPoints} points (separated by sensor location)`);
+            console.log(`📈 Chart data: ${chartDataPoints} points`);
+            console.log(`   Battery ambient: ${chartTimeSeries.ambient_temp_battery.length} temp, ${chartTimeSeries.ambient_humidity_battery.length} humidity`);
+            console.log(`   Prototype: ${chartTimeSeries.ambient_temp_proto.length} temp, ${chartTimeSeries.ambient_humidity_proto.length} humidity`);
 
             // ================================================================
-            // PART 2: Process CARD data (latest, accurate)
+            // PART 2: Process CARD data (latest, accurate) - FIXED ROUTING
             // ================================================================
             const cardLines = cardCSV.trim().split('\n');
             const latestValues = {
@@ -961,7 +963,7 @@
                     measurement: measurement
                 });
 
-                // Separate battery vs prototype sensor data
+                // Route latest values by measurement
                 if (field === "ambient_temp" || field === "ambient_humidity") {
                     if (measurement === "nmc90_power_data") {
                         latestValues.battery[field] = value;
@@ -969,6 +971,7 @@
                         latestValues.prototype[field] = value;
                     }
                 } else {
+                    // All other fields from battery measurement
                     latestValues.battery[field] = value;
                 }
                 
@@ -976,8 +979,8 @@
             }
 
             console.log(`💳 Card data: ${totalCardPoints} points (latest/accurate)`);
-            console.log(`📝 Latest battery values:`, latestValues.battery);
-            console.log(`📝 Latest prototype values:`, latestValues.prototype);
+            console.log(`📝 Battery values:`, latestValues.battery);
+            console.log(`📝 Prototype values:`, latestValues.prototype);
 
             // ================================================================
             // PART 3: Update metric cards with LATEST values
@@ -1000,11 +1003,11 @@
             forceUpdateValue(ui.power, 'card-power', latestValues.battery['load_power'], 2, 'W');
             forceUpdateValue(ui.soc, 'card-soc', latestValues.battery['state_of_charge'], 1, '%');
             
-            // Ambient (battery location)
+            // Ambient (battery monitor location)
             forceUpdateValue(ui.temp, 'card-temp', latestValues.battery['ambient_temp'], 1, '°C');
             forceUpdateValue(ui.humidity, 'card-humidity', latestValues.battery['ambient_humidity'], 0, '%');
             
-            // Prototype (solar/environment sensor)
+            // Prototype (environment sensor at solar panel)
             forceUpdateValue(ui.protoTemp, 'card-proto-temp', latestValues.prototype['ambient_temp'], 1, '°C');
             forceUpdateValue(ui.protoHumidity, 'card-proto-humidity', latestValues.prototype['ambient_humidity'], 0, '%');
             
@@ -1040,11 +1043,10 @@
             // ================================================================
             // PART 4: Update charts with SMOOTH data
             // ================================================================
-            if (charts.solar) {
-                charts.solar.data.datasets[0].data = chartTimeSeries.light_lux;
-                charts.solar.data.datasets[1].data = chartTimeSeries.ambient_temp_battery;
-                charts.solar.data.datasets[2].data = chartTimeSeries.ambient_humidity_battery;
-                charts.solar.update('none');
+            if (charts.battery) {
+                charts.battery.data.datasets[0].data = chartTimeSeries.battery_voltage;
+                charts.battery.data.datasets[1].data = chartTimeSeries.state_of_charge;
+                charts.battery.update('none');
             }
 
             if (charts.power) {
@@ -1054,20 +1056,19 @@
             }
 
             if (charts.proto) {
-                charts.proto.data.datasets[0].data = chartTimeSeries.ambient_temp_solar;
-                charts.proto.data.datasets[1].data = chartTimeSeries.ambient_humidity_solar;
+                charts.proto.data.datasets[0].data = chartTimeSeries.ambient_temp_proto;
+                charts.proto.data.datasets[1].data = chartTimeSeries.ambient_humidity_proto;
                 charts.proto.update('none');
             }
 
-            if (charts.battery) {
-                charts.battery.data.datasets[0].data = chartTimeSeries.battery_voltage;
-                charts.battery.data.datasets[1].data = chartTimeSeries.state_of_charge;
-                charts.battery.update('none');
+            if (charts.solar) {
+                charts.solar.data.datasets[0].data = chartTimeSeries.light_lux;
+                charts.solar.data.datasets[1].data = chartTimeSeries.ambient_temp_battery;
+                charts.solar.data.datasets[2].data = chartTimeSeries.ambient_humidity_battery;
+                charts.solar.update('none');
             }
 
             console.log(`✅ DUAL-QUERY UPDATE COMPLETE!`);
-            console.log(`   📊 Charts: ${chartDataPoints} points`);
-            console.log(`   💳 Cards: Latest values (battery + prototype)`);
         }
 
         // =============================================================================
