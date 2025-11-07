@@ -125,12 +125,6 @@
             </div>
         </div>
 
-        <!-- Debug Panel -->
-        <div class="debug-panel">
-            <h3>🔍 Data Structure Diagnostic (Check Console F12 for full details)</h3>
-            <pre id="debug-output">Waiting for data...</pre>
-        </div>
-
         <!-- Error/Success Messages -->
         <div class="error-container" id="error-container"></div>
         <div class="success-container" id="success-container"></div>
@@ -608,10 +602,11 @@
             }
 
             // Try both keys for ambient data
-            const ambientTemp = latestValues['ambient_temp_nmc90_power_data'] || latestValues['ambient_temp'];
-            const ambientHum = latestValues['ambient_humidity_nmc90_power_data'] || latestValues['ambient_humidity'];
-            const protoTemp = latestValues['ambient_temp_environment_data'];
-            const protoHum = latestValues['ambient_humidity_environment_data'];
+            
+            const protoTemp = latestValues['ambient_temp_nmc90_power_data'] || latestValues['ambient_temp'];
+            const protoHum = latestValues['ambient_humidity_nmc90_power_data'] || latestValues['ambient_humidity'];
+            const ambientTemp = latestValues['ambient_temp_environment_data'] || latestValues['ambient_temp1'];;
+            const ambientHum = latestValues['ambient_humidity_environment_data'] || latestValues['ambient_humidity1'];;
 
             updateValue(ui.temp, 'card-temp', ambientTemp, 1, '°C');
             updateValue(ui.humidity, 'card-humidity', ambientHum, 0, '%');
@@ -656,8 +651,8 @@
 
             if (charts.solar) {
                 charts.solar.data.datasets[0].data = timeSeries.light_lux;
-                charts.solar.data.datasets[1].data = timeSeries.ambient_temp;
-                charts.solar.data.datasets[2].data = timeSeries.ambient_humidity;
+                charts.solar.data.datasets[1].data = timeSeries.ambient_temp1;
+                charts.solar.data.datasets[2].data = timeSeries.ambient_humidity1;
                 charts.solar.update('none');
             }
 
