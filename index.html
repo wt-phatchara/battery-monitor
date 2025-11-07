@@ -671,13 +671,13 @@
 
                 console.log(`📊 Aggregation: ${requiresAggregation ? aggregateInterval : '2s dedup'} (Chart: mean, Card: last)`);
                 // ============================================================
-                // STEP 2: Build base query (shared filters) - CORRECTED!
+                // STEP 2: Build base query (FIXED - removed battery_type filter!)
                 // ============================================================
                 const baseQuery = `
                     from(bucket: "${config.bucket}")
                       |> ${timeRange}
                       |> filter(fn: (r) => 
-                            (r["_measurement"] == "nmc90_power_data" and r["battery_type"] == "NMC90_1s3p") or
+                            r["_measurement"] == "nmc90_power_data" or
                             r["_measurement"] == "environment_data"
                          )
                       |> filter(fn: (r) =>
