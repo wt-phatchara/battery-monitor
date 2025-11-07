@@ -564,9 +564,9 @@
                 // Store time series
                 if (timeSeries.hasOwnProperty(field)) {
                     timeSeries[field].push({ x: time, y: value });
-                } else if (field === 'ambient_temp' && measurement === 'environment_data') {
+                } else if (field === 'ambient_temp' && measurement === 'nmc90_power_data') {
                     timeSeries.proto_temp.push({ x: time, y: value });
-                } else if (field === 'ambient_humidity' && measurement === 'environment_data') {
+                } else if (field === 'ambient_humidity' && measurement === 'nmc90_power_data') {
                     timeSeries.proto_humidity.push({ x: time, y: value });
                 }
 
