@@ -35,6 +35,14 @@
         .header h1 { font-size: 1.8em; margin-bottom: 5px; font-weight: 700; color: #20398c; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .header .subtitle { font-size: 0.95em; color: #495057; margin-bottom: 10px; }
         .version-badge { display: inline-block; background: #e7f1ff; color: #0d6efd; border: 1px solid #cce0ff; padding: 4px 10px; border-radius: 10px; font-weight: 600; font-size: 0.75em; margin-bottom: 12px; }
+        
+        /* --- PRODUCTION BADGE STYLE --- */
+        #mode-badge {
+            background-color: #d1e7dd; /* Green */
+            color: #0f5132;
+            border-color: #badbcc;
+        }
+        
         .company-link { color: #20398c; text-decoration: none; font-size: 0.8em; font-weight: 600; transition: color 0.2s ease; }
         .company-link:hover { color: #1a2f70; text-decoration: underline; }
 
@@ -58,11 +66,6 @@
         .toolbar .btn-primary { background-color: #20398c; color: #fff; border-color: #20398c; }
         .toolbar .btn-primary:hover { background-color: #1a2f70; }
 
-        /* --- Debug Panel --- */
-        .debug-panel { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 15px; margin-bottom: 20px; font-family: 'Courier New', monospace; font-size: 0.75em; max-height: 200px; overflow-y: auto; }
-        .debug-panel h3 { font-size: 1em; margin-bottom: 10px; color: #495057; }
-        .debug-panel pre { margin: 0; white-space: pre-wrap; word-wrap: break-word; }
-
         /* --- Metric Cards --- */
         .metrics { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 20px; }
         .metric-card { background: #ffffff; padding: 10px; border-radius: 6px; text-align: center; border: 1px solid #e9ecef; box-shadow: 0 1px 2px rgba(0,0,0,0.03); transition: all 0.25s ease; }
@@ -72,6 +75,18 @@
         .metric-label { font-size: 0.7em; color: #6c757d; text-transform: uppercase; font-weight: 600; margin-bottom: 4px; letter-spacing: 0.3px; }
         .metric-value { font-size: 1.6em; font-weight: 700; color: #343a40; line-height: 1.1; display: flex; align-items: baseline; justify-content: center; gap: 3px; }
         .metric-unit { font-size: 0.6em; font-weight: 600; color: #6c757d; }
+
+        /* --- CRITICAL ALERT STYLE --- */
+        .metric-card.critical-alert {
+            animation: pulse-red 1s infinite;
+            border-color: #dc3545;
+        }
+
+        @keyframes pulse-red {
+            0% { background-color: #fff; }
+            50% { background-color: #f8d7da; }
+            100% { background-color: #fff; }
+        }
 
         /* --- Status Specific --- */
         .status-idle { background: #f8f9fa; color: #6c757d; padding: 4px 10px; border-radius: 10px; font-size: 0.7em; font-weight: 700; }
@@ -103,15 +118,13 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
         <div class="header">
             <h1>🔋 NMC90 Battery Field Test Monitor</h1>
             <p class="subtitle">Real-time Battery & Environmental Monitoring</p>
-            <span class="version-badge">DIAGNOSTIC MODE</span><br>
+            <span class="version-badge" id="mode-badge">OPERATIONAL</span><br>
             <a href="https://cest.vistec.ac.th" class="company-link" target="_blank">🔬 CEST VISTEC - Battery Technology Solutions</a>
         </div>
 
-        <!-- Status Bar -->
         <div class="status-bar">
             <div class="status-badge status-connected" id="status-badge">
                 <span class="live-dot" id="live-dot"></span>
@@ -125,11 +138,9 @@
             </div>
         </div>
 
-        <!-- Error/Success Messages -->
         <div class="error-container" id="error-container"></div>
         <div class="success-container" id="success-container"></div>
 
-        <!-- Toolbar -->
         <div class="toolbar">
             <div class="toolbar-group">
                 <label for="time-range-select">Time Range:</label>
@@ -151,7 +162,6 @@
             </div>
         </div>
 
-        <!-- Metric Cards -->
         <div class="metrics">
             <div class="metric-card" id="card-voltage-filtered">
                 <div class="metric-label">Voltage</div>
@@ -223,23 +233,23 @@
                     <span class="metric-unit">%</span>
                 </div>
             </div>
-            <div class="metric-card" id="card-good">
-                <div class="metric-label">Good Readings</div>
+            
+            <div class="metric-card" id="card-soh">
+                <div class="metric-label">State of Health</div>
                 <div class="metric-value">
-                    <span id="good-readings">--</span>
-                    <span class="metric-unit"></span>
+                    <span id="soh">--</span>
+                    <span class="metric-unit">%</span>
                 </div>
             </div>
-            <div class="metric-card" id="card-bad">
-                <div class="metric-label">Bad Readings</div>
+            <div class="metric-card" id="card-cycles">
+                <div class="metric-label">Cycle Count</div>
                 <div class="metric-value">
-                    <span id="bad-readings">--</span>
+                    <span id="cycles">--</span>
                     <span class="metric-unit"></span>
                 </div>
             </div>
         </div>
 
-        <!-- Charts -->
         <div class="charts">
             <div class="chart-container">
                 <div class="chart-title">🔋 Battery Voltage & State of Charge</div>
@@ -267,9 +277,8 @@
             </div>
         </div>
 
-        <!-- Footer -->
         <div class="footer">
-            <p>Powered by CEST VISTEC Battery Technology Solutions | Diagnostic Mode v3.0</p>
+            <p>Powered by CEST VISTEC Battery Technology Solutions | Operational Monitor v3.1</p>
             <p><a href="https://github.com/influxdata/influxdb" target="_blank" style="color: #6c757d;">Built with InfluxDB</a> & <a href="https://www.chartjs.org/" target="_blank" style="color: #6c757d;">Chart.js</a></p>
         </div>
     </div>
@@ -295,7 +304,6 @@
             liveDot: document.getElementById('live-dot'),
             lastUpdate: document.getElementById('last-update'),
             dataPoints: document.getElementById('data-points'),
-            debugOutput: document.getElementById('debug-output'),
             voltageFiltered: document.getElementById('voltage-filtered'),
             lightLux: document.getElementById('light-lux'),
             current: document.getElementById('current'),
@@ -306,8 +314,6 @@
             humidity: document.getElementById('humidity'),
             protoTemp: document.getElementById('proto-temp'),
             protoHumidity: document.getElementById('proto-humidity'),
-            goodReadings: document.getElementById('good-readings'),
-            badReadings: document.getElementById('bad-readings'),
             batteryChartCanvas: document.getElementById('battery-chart'),
             powerChartCanvas: document.getElementById('power-chart'),
             protoChartCanvas: document.getElementById('proto-chart'),
@@ -315,11 +321,15 @@
             timeRangeSelect: document.getElementById('time-range-select'),
             refreshBtn: document.getElementById('refresh-btn'),
             errorContainer: document.getElementById('error-container'),
-            successContainer: document.getElementById('success-container')
+            successContainer: document.getElementById('success-container'),
+            
+            // --- NEW PRODUCTION KPIs ---
+            soh: document.getElementById('soh'),
+            cycles: document.getElementById('cycles')
         };
 
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 Initializing DIAGNOSTIC MODE...');
+            console.log('🚀 Initializing OPERATIONAL MONITOR...');
             initializeCharts();
             setupEventListeners();
             fetchData();
@@ -441,14 +451,16 @@
         async function fetchData() {
             if (isUpdating) return;
             isUpdating = true;
-            console.log(`\n🔍 ===== DIAGNOSTIC FETCH [${new Date().toLocaleTimeString()}] =====`);
+            console.log(`\n🔍 ===== OPERATIONAL FETCH [${new Date().toLocaleTimeString()}] =====`);
             
             let fetchSuccessful = false;
 
             try {
                 const timeRange = getTimeRangeQuery();
 
-                // Simple query - just get ALL the data
+                // This query now includes placeholders for new production data
+                // You would need to add fields like 'state_of_health' and 'cycle_count'
+                // to the 'nmc90_power_data' measurement from your embedded device.
                 const query = `
                     from(bucket: "${config.bucket}")
                       |> ${timeRange}
@@ -481,10 +493,6 @@
                 const csv = await response.text();
                 console.log('📥 Response received, length:', csv.length);
                 
-                // Log first 10 lines to console
-                const firstLines = csv.split('\n').slice(0, 10).join('\n');
-                console.log('📋 First 10 lines of CSV:\n' + firstLines);
-
                 processData(csv);
 
                 fetchSuccessful = true;
@@ -498,17 +506,15 @@
                 isUpdating = false;
             }
         }
-
+        
         function processData(csv) {
             console.log('🔄 Processing data...');
             
             const lines = csv.trim().split('\n');
-            console.log(`📊 Total lines in CSV: ${lines.length}`);
-
-            // Find all unique fields and measurements
             const fieldsMeasurements = new Set();
             const latestValues = {};
             
+            // Reset timeSeries data
             const timeSeries = {
                 battery_voltage: [],
                 light_lux: [],
@@ -526,7 +532,6 @@
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].trim();
                 
-                // Skip empty lines, comments, and header lines
                 if (!line || line.startsWith('#') || line.startsWith(',result') || line.includes('_start,_stop')) {
                     continue;
                 }
@@ -534,11 +539,8 @@
                 const parts = line.split(',');
                 if (parts.length < 9) continue;
 
-                // Try to find _measurement, _field, _time, _value
-                // The CSV format can vary, so let's be flexible
                 let measurement, field, timeStr, valueStr;
 
-                // Common format: ,result,table,_start,_stop,_time,_value,_field,_measurement
                 if (parts.length >= 9) {
                     timeStr = parts[5]?.trim();
                     valueStr = parts[6]?.trim();
@@ -553,41 +555,39 @@
 
                 if (isNaN(time.getTime()) || isNaN(value)) continue;
 
-                // Track what we're finding
                 fieldsMeasurements.add(`${measurement} → ${field}`);
 
-                // Store latest value
                 const key = `${field}_${measurement}`;
                 latestValues[key] = value;
-                latestValues[field] = value; // Also store without measurement suffix
+                latestValues[field] = value; 
 
-                // Store time series
-                if (timeSeries.hasOwnProperty(field)) {
+                // Route data to the correct timeSeries array
+                if (field === 'ambient_temp') {
+                    if (measurement === 'environment_data') {
+                        timeSeries.ambient_temp.push({ x: time, y: value }); // Ambient
+                    } else if (measurement === 'nmc90_power_data') {
+                        timeSeries.proto_temp.push({ x: time, y: value }); // Prototype
+                    }
+                } else if (field === 'ambient_humidity') {
+                    if (measurement === 'environment_data') {
+                        timeSeries.ambient_humidity.push({ x: time, y: value }); // Ambient
+                    } else if (measurement === 'nmc90_power_data') {
+                        timeSeries.proto_humidity.push({ x: time, y: value }); // Prototype
+                    }
+                } else if (timeSeries.hasOwnProperty(field)) {
                     timeSeries[field].push({ x: time, y: value });
-                } else if (field === 'ambient_temp' && measurement === 'nmc90_power_data') {
-                    timeSeries.proto_temp.push({ x: time, y: value });
-                } else if (field === 'ambient_humidity' && measurement === 'nmc90_power_data') {
-                    timeSeries.proto_humidity.push({ x: time, y: value });
                 }
 
                 dataCount++;
             }
 
             console.log(`✅ Parsed ${dataCount} data points`);
-            console.log('📊 Fields and Measurements found:');
-            fieldsMeasurements.forEach(fm => console.log(`   - ${fm}`));
-            console.log('💾 Latest values:', latestValues);
 
-            // Update debug panel
-            let debugText = `Found ${dataCount} data points\n\n`;
-            debugText += `Fields & Measurements:\n`;
-            fieldsMeasurements.forEach(fm => debugText += `  • ${fm}\n`);
-            debugText += `\nLatest Values:\n`;
-            Object.entries(latestValues).forEach(([k, v]) => debugText += `  • ${k}: ${v.toFixed(2)}\n`);
-            ui.debugOutput.textContent = debugText;
-
-            // Update cards
-            updateValue(ui.voltageFiltered, 'card-voltage-filtered', latestValues['battery_voltage'], 3, 'V');
+            // --- Update cards ---
+            
+            // VOLTAGE (formatted to 2 decimals)
+            updateValue(ui.voltageFiltered, 'card-voltage-filtered', latestValues['battery_voltage'], 2, 'V');
+            
             updateValue(ui.current, 'card-current', latestValues['load_current'], 0, 'mA');
             updateValue(ui.power, 'card-power', latestValues['load_power'], 2, 'W');
             updateValue(ui.soc, 'card-soc', latestValues['state_of_charge'], 1, '%');
@@ -601,20 +601,20 @@
                 }
             }
 
-            // Try both keys for ambient data
-            
-            const protoTemp = latestValues['ambient_temp_nmc90_power_data'] || latestValues['ambient_temp'];
-            const protoHum = latestValues['ambient_humidity_nmc90_power_data'] || latestValues['ambient_humidity'];
-            const ambientTemp = latestValues['ambient_temp_environment_data'] || latestValues['ambient_temp'];;
-            const ambientHum = latestValues['ambient_humidity_environment_data'] || latestValues['ambient_humidity'];;
+            // Use the differentiated keys for latest values
+            const protoTemp = latestValues['ambient_temp_nmc90_power_data'];
+            const protoHum = latestValues['ambient_humidity_nmc90_power_data'];
+            const ambientTemp = latestValues['ambient_temp_environment_data'];
+            const ambientHum = latestValues['ambient_humidity_environment_data'];
 
             updateValue(ui.temp, 'card-temp', ambientTemp, 1, '°C');
             updateValue(ui.humidity, 'card-humidity', ambientHum, 0, '%');
             updateValue(ui.protoTemp, 'card-proto-temp', protoTemp, 1, '°C');
             updateValue(ui.protoHumidity, 'card-proto-humidity', protoHum, 0, '%');
 
-            updateValue(ui.badReadings, 'card-bad', latestValues['bad_readings_total'], 0, '');
-            updateValue(ui.goodReadings, 'card-good', Math.max(0, dataCount - (latestValues['bad_readings_total'] || 0)), 0, '');
+            // Update new production KPIs (will show '--' if data is not available)
+            updateValue(ui.soh, 'card-soh', latestValues['state_of_health'], 1, '%');
+            updateValue(ui.cycles, 'card-cycles', latestValues['cycle_count'], 0, '');
 
             // Status
             let status = 'IDLE', statusClass = 'status-idle';
@@ -630,25 +630,22 @@
 
             ui.dataPoints.textContent = dataCount;
 
-            // Update charts
+            // --- Update charts ---
             if (charts.battery) {
                 charts.battery.data.datasets[0].data = timeSeries.battery_voltage;
                 charts.battery.data.datasets[1].data = timeSeries.state_of_charge;
                 charts.battery.update('none');
             }
-
             if (charts.power) {
                 charts.power.data.datasets[0].data = timeSeries.load_current;
                 charts.power.data.datasets[1].data = timeSeries.load_power;
                 charts.power.update('none');
             }
-
             if (charts.proto) {
                 charts.proto.data.datasets[0].data = timeSeries.proto_temp;
                 charts.proto.data.datasets[1].data = timeSeries.proto_humidity;
                 charts.proto.update('none');
             }
-
             if (charts.solar) {
                 charts.solar.data.datasets[0].data = timeSeries.light_lux;
                 charts.solar.data.datasets[1].data = timeSeries.ambient_temp;
@@ -659,15 +656,44 @@
             console.log('✅ Update complete!');
         }
 
+
+        // =================================================================
+        // ============= ⬇️ START: UPDATED FUNCTION ⬇️ =============
+        // =================================================================
+        
         function updateValue(element, cardId, value, decimals, unit) {
             if (!element) return;
+            
             const formatted = (value !== undefined && value !== null && !isNaN(value)) ? Number(value).toFixed(decimals) : '--';
             element.textContent = formatted;
+            
             const unitEl = element.nextElementSibling;
             if (unitEl && unitEl.classList.contains('metric-unit')) {
                 unitEl.textContent = unit;
             }
+
+            // --- START: PRODUCTION ALERT LOGIC ---
+            const cardElement = document.getElementById(cardId);
+            if (!cardElement) return;
+
+            // Clear any existing alerts first
+            cardElement.classList.remove('critical-alert');
+
+            // Add alert logic
+            if (cardId === 'card-proto-temp' && value > 45) { // Critical Temp
+                cardElement.classList.add('critical-alert');
+            } else if (cardId === 'card-voltage-filtered' && value > 4.25) { // Over-voltage
+                cardElement.classList.add('critical-alert');
+            } else if (cardId === 'card-voltage-filtered' && value < 3.2 && value > 0) { // Under-voltage
+                cardElement.classList.add('critical-alert');
+            }
+            // --- END: ALERT LOGIC ---
         }
+        
+        // =================================================================
+        // ============== ⬆️ END: UPDATED FUNCTION ⬆️ ==============
+        // =================================================================
+
 
         function updateStatus(connected) {
             if (!ui.statusBadge || !ui.statusText || !ui.liveDot || !ui.lastUpdate) return;
@@ -699,6 +725,8 @@
             clearTimeout(errorTimeout);
             if (ui.errorContainer) ui.errorContainer.innerHTML = '';
         }
+
+
 
         function showSuccess(message) {
             clearTimeout(errorTimeout);
